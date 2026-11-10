@@ -5,6 +5,8 @@
 
 package com.metrolist.music.ui.player
 
+import com.metrolist.music.ui.theme.WindowLayout
+import androidx.compose.foundation.layout.widthIn
 import com.metrolist.music.ui.theme.rememberWindowLayout
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -215,6 +217,14 @@ private fun PlayerContent(
                     }
                 }
             }
+            // A tablet held upright: the phone player, in a column of its own in the middle,
+            // rather than stretched edge to edge.
+            layout.wide ->
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                    Box(Modifier.widthIn(max = WindowLayout.ReadingMaxWidth).fillMaxSize()) {
+                        PortraitPlayer(state, navController, playerConnection, metadata, progress, seekPreview, page, onPageChange)
+                    }
+                }
             else -> PortraitPlayer(state, navController, playerConnection, metadata, progress, seekPreview, page, onPageChange)
         }
     }
@@ -438,7 +448,7 @@ private fun TitleRow(
 }
 
 @Composable
-private fun TimeLabels(
+internal fun TimeLabels(
     progress: PlaybackProgress,
     seekPreview: () -> Long?,
 ) {

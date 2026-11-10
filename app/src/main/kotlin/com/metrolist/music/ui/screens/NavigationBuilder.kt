@@ -129,21 +129,25 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable(
-        route = "radio/{playlistId}?params={params}&name={name}&thumbnail={thumbnail}",
+        route = "radio?playlistId={playlistId}&videoId={videoId}&params={params}&name={name}&thumbnail={thumbnail}&round={round}",
         arguments = listOf(
-            navArgument("playlistId") { type = NavType.StringType },
+            navArgument("playlistId") { type = NavType.StringType; defaultValue = "" },
+            navArgument("videoId") { type = NavType.StringType; defaultValue = "" },
             navArgument("params") { type = NavType.StringType; defaultValue = "" },
             navArgument("name") { type = NavType.StringType; defaultValue = "" },
             navArgument("thumbnail") { type = NavType.StringType; defaultValue = "" },
+            navArgument("round") { type = NavType.BoolType; defaultValue = false },
         ),
     ) { entry ->
         val args = entry.arguments
         RadioScreen(
             navController = navController,
-            playlistId = args?.getString("playlistId").orEmpty(),
+            playlistId = args?.getString("playlistId")?.takeIf { it.isNotEmpty() },
+            videoId = args?.getString("videoId")?.takeIf { it.isNotEmpty() },
             params = args?.getString("params")?.takeIf { it.isNotEmpty() },
-            artistName = args?.getString("name").orEmpty(),
+            name = args?.getString("name").orEmpty(),
             thumbnailUrl = args?.getString("thumbnail")?.takeIf { it.isNotEmpty() },
+            round = args?.getBoolean("round") ?: false,
         )
     }
 

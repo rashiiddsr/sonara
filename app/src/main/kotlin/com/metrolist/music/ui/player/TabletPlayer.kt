@@ -5,6 +5,20 @@
 
 package com.metrolist.music.ui.player
 
+import kotlinx.coroutines.delay
+import com.metrolist.music.ui.component.ErSlider
+import androidx.compose.runtime.withFrameMillis
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.foundation.Canvas
 import androidx.media3.common.Player
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -101,7 +115,9 @@ internal fun TabletPlayer(
     seekPreview: androidx.compose.runtime.MutableState<Long?>,
     @Suppress("UNUSED_PARAMETER") layout: WindowLayout,
 ) {
-    var panel by rememberSaveable { mutableStateOf<SidePanel?>(null) }
+    // Opens in two columns, the player and its lyrics, as the desktop's does; the same button
+    // closes the panel and the player glides back to the middle.
+    var panel by rememberSaveable { mutableStateOf<SidePanel?>(SidePanel.Lyrics) }
     var nowPlaying by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = panel != null && !nowPlaying) { panel = null }
 
@@ -221,23 +237,25 @@ private fun PanelArea(
 }
 
 /**
- * Full screen, like a TV's now-playing screen, in two balanced halves: on the left the cover,
- * large, with the title, the time and small controls under it; on the right the lyrics as they
- * play, a short window of about five lines that fades at its edges. The Sonara mark sits top
- * left, the song coming up next bottom right. System bars hide and the screen stays on; back or
- * the button in the corner returns.
+ * Full screen, like the desktop's: on the left a black record turning while the song plays, the
+ * cover at its centre, and under it the title, artists and album, centred, then the time bar (it
+ * seeks) and the controls; on the right the lyrics as they play. The Sonara mark sits top left,
+ * the song coming up next bottom right. The exit button shows only while the screen is touched
+ * (or a mouse moves) and fades a few seconds after; the lyrics moving by themselves never bring
+ * it back. System bars hide and the screen stays on; back returns.
  */
 @Composable
 private fun NowPlayingScreen(
     metadata: MediaMetadata,
     playerConnection: PlayerConnection,
     progress: PlaybackProgress,
-    seekPreview: androidx.compose.runtime.State<Long?>,
+    seekPreview: androidx.compose.runtime.MutableState<Long?>,
     onExit: () -> Unit,
 ) {
     BackHandler(onBack = onExit)
     ImmersiveWhileShown()
     val repeatMode by playerConnection.repeatMode.collectAsStateWithLifecycle()
+    val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
     val queue by playerConnection.queueWindows.collectAsStateWithLifecycle()
     val upNext =
         remember(metadata.id, queue) {
@@ -245,47 +263,97 @@ private fun NowPlayingScreen(
             player?.nextMediaItemIndex?.takeIf { it != C.INDEX_UNSET }?.let { player.getMediaItemAt(it).metadata }
         }
 
+    // Only a person counts: a touch, or a mouse that really moved. Lyrics scrolling under a
+    // resting mouse make the system report "moves" of zero distance; those are left out.
+    var touchedAt by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var controlsShown by remember { mutableStateOf(true) }
+    LaunchedEffect(touchedAt) {
+        controlsShown = true
+        delay(CONTROLS_HIDE_MS)
+        controlsShown = false
+    }
+
     BoxWithConstraints(
         Modifier
             .fillMaxSize()
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    var last: Offset? = null
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        val change = event.changes.firstOrNull() ?: continue
+                        val moved = last?.let { (change.position - it).getDistance() >= MOVE_THRESHOLD_PX } ?: false
+                        last = change.position
+                        if (change.pressed || moved) touchedAt = System.currentTimeMillis()
+                    }
+                }
+            }
             .windowInsetsPadding(WindowInsets.displayCutout)
             .padding(horizontal = NOW_PLAYING_MARGIN_H, vertical = NOW_PLAYING_MARGIN_V),
     ) {
-        // Corners: the mark top left, the way back top right.
         Row(Modifier.align(Alignment.TopStart), verticalAlignment = Alignment.CenterVertically) {
             Image(painterResource(R.drawable.logo_mark), contentDescription = null, modifier = Modifier.size(Size.IconButton))
             Spacer(Modifier.width(Spacing.S))
             Text(stringResource(R.string.er_brand), style = MaterialTheme.typography.titleLarge)
         }
-        IconButton(onClick = onExit, modifier = Modifier.align(Alignment.TopEnd)) {
-            Icon(painterResource(R.drawable.fullscreen_exit), contentDescription = stringResource(R.string.er_lyrics_exit_fullscreen))
+        AnimatedVisibility(
+            visible = controlsShown,
+            enter = fadeIn(Motion.medium()),
+            exit = fadeOut(Motion.medium()),
+            modifier = Modifier.align(Alignment.TopEnd),
+        ) {
+            IconButton(onClick = onExit) {
+                Icon(painterResource(R.drawable.fullscreen_exit), contentDescription = stringResource(R.string.er_lyrics_exit_fullscreen))
+            }
         }
 
-        // The cover as large as the height allows once the title, time and controls fit under it.
-        val cover = (maxHeight * NOW_PLAYING_COVER_SHARE).coerceAtMost(maxWidth * 0.4f)
+        val column = maxWidth * NOW_PLAYING_COLUMN_SHARE
+        val disc = minOf(maxHeight * NOW_PLAYING_DISC_SHARE, column)
         val lyricsHeight = maxHeight * NOW_PLAYING_LYRICS_SHARE
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxSize().padding(top = Size.IconButton),
         ) {
-            Column(Modifier.width(cover)) {
-                Box(Modifier.size(cover), contentAlignment = Alignment.Center) { PlayerArtwork(metadata) }
+            Column(Modifier.width(column), horizontalAlignment = Alignment.CenterHorizontally) {
+                SpinningRecord(metadata.thumbnailUrl, playing = isPlaying, size = disc)
                 Spacer(Modifier.height(Spacing.L))
                 Text(
                     metadata.title,
                     style = MaterialTheme.typography.headlineMedium,
-                    maxLines = 1,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     metadata.artists.joinToString { it.name },
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                metadata.album?.title?.let { album ->
+                    Text(
+                        album,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 Spacer(Modifier.height(Spacing.M))
-                TimeLine(progress)
+                ErSlider(
+                    progress = { progress.fraction },
+                    onSeeking = { f -> seekPreview.value = f?.let { (it * progress.duration).toLong() } },
+                    onSeekFinished = { f ->
+                        val target = (f * progress.duration).toLong()
+                        playerConnection.seekTo(target)
+                        progress.position = target
+                    },
+                    activeColor = MaterialTheme.colorScheme.onSurface,
+                )
+                TimeLabels(progress = progress, seekPreview = { seekPreview.value })
                 Spacer(Modifier.height(Spacing.S))
                 TransportControls(playerConnection)
             }
@@ -323,30 +391,41 @@ private fun NowPlayingScreen(
     }
 }
 
-/** A thin progress line with the elapsed and total time. */
+/** A black record turning while the song plays, the cover on its label, as on the desktop. */
 @Composable
-private fun TimeLine(progress: PlaybackProgress) {
-    Column(Modifier.widthIn(max = WindowLayout.ReadingMaxWidth)) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(Size.SliderTrack)
-                .clip(ErShape.Pill)
-                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = TRACK_ALPHA)),
-        ) {
-            Box(
-                Modifier
-                    .fillMaxWidth(progress.fraction)
-                    .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.primary),
-            )
+private fun SpinningRecord(coverUrl: String?, playing: Boolean, size: Dp) {
+    var angle by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(playing) {
+        if (!playing) return@LaunchedEffect
+        var last = withFrameMillis { it }
+        while (true) {
+            withFrameMillis { now ->
+                angle = (angle + (now - last) * RECORD_DEGREES_PER_MS) % FULL_TURN
+                last = now
+            }
         }
-        Spacer(Modifier.height(Spacing.XS))
-        Row(Modifier.fillMaxWidth()) {
-            Text(formatTime(progress.position), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.weight(1f))
-            Text(formatTime(progress.duration), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(size).graphicsLayer { rotationZ = angle }) {
+        Canvas(Modifier.fillMaxSize()) {
+            val outer = this.size.minDimension / 2
+            drawCircle(RECORD_BLACK, outer)
+            repeat(RECORD_GROOVES) { groove ->
+                drawCircle(
+                    Color.White.copy(alpha = GROOVE_ALPHA),
+                    outer * (RECORD_LABEL + (1 - RECORD_LABEL) * (groove + 1) / (RECORD_GROOVES + 1)),
+                    style = Stroke(1f),
+                )
+            }
+            drawArc(Color.White.copy(alpha = RECORD_SHINE), SHINE_START, SHINE_SWEEP, useCenter = true)
+            drawArc(Color.White.copy(alpha = RECORD_SHINE), SHINE_START + FULL_TURN / 2, SHINE_SWEEP, useCenter = true)
         }
+        AsyncImage(
+            model = coverUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.size(size * RECORD_LABEL).clip(CircleShape),
+        )
+        Box(Modifier.size(size * RECORD_HOLE).clip(CircleShape).background(RECORD_BLACK))
     }
 }
 
@@ -461,7 +540,20 @@ private fun TabletActionRow(
 private const val PLAYER_PANE_SHARE = 0.34f
 private const val QUEUE_CARD_ALPHA = 0.55f
 private const val TRACK_ALPHA = 0.2f
-private const val NOW_PLAYING_COVER_SHARE = 0.56f
+private const val NOW_PLAYING_COLUMN_SHARE = 0.34f
+private const val NOW_PLAYING_DISC_SHARE = 0.46f
+private const val CONTROLS_HIDE_MS = 3_000L
+private const val MOVE_THRESHOLD_PX = 2f
+private const val RECORD_DEGREES_PER_MS = 0.04f
+private const val FULL_TURN = 360f
+private const val RECORD_LABEL = 0.62f
+private const val RECORD_HOLE = 0.05f
+private const val RECORD_GROOVES = 9
+private const val GROOVE_ALPHA = 0.07f
+private const val RECORD_SHINE = 0.05f
+private const val SHINE_START = 30f
+private const val SHINE_SWEEP = 40f
+private val RECORD_BLACK = Color(0xFF0C0C0E)
 private const val NOW_PLAYING_LYRICS_SHARE = 0.6f
 private val NOW_PLAYING_MARGIN_H = 64.dp
 private val NOW_PLAYING_MARGIN_V = 40.dp

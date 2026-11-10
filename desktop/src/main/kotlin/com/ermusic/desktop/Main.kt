@@ -5,6 +5,13 @@
 
 package com.ermusic.desktop
 
+import androidx.compose.ui.window.LocalWindowExceptionHandlerFactory
+import com.ermusic.desktop.window.ErrorLog
+import com.ermusic.desktop.data.Housekeeping
+import com.ermusic.desktop.window.WindowsSession
+import com.ermusic.desktop.playback.LyricsRepository
+import com.ermusic.desktop.ui.OfflineStrip
+import com.ermusic.desktop.playback.Connection
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -98,6 +105,7 @@ import com.ermusic.desktop.ui.BareTitleBar
 import com.ermusic.desktop.ui.BrowseScreen
 import com.ermusic.desktop.ui.CategoryScreen
 import com.ermusic.desktop.ui.ErShape
+import com.ermusic.desktop.ui.EpisodesScreen
 import com.ermusic.desktop.ui.HistoryScreen
 import com.ermusic.desktop.ui.HomeScreen
 import com.ermusic.desktop.ui.ImmersivePlayer
@@ -154,7 +162,9 @@ private val guestAllowed = System.getenv("SONARA_GUEST") != null
 /** Closing to the tray needs a tray: GNOME has none without an extension, and the window would just vanish. */
 val keepsPlayingInTray: Boolean get() = !Os.isLinux || isTraySupported
 
+@OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+    ErrorLog.install()
     LinuxDesktop.nameWindows()
     if (!SingleInstance.claim()) return
     // Left alone, the client sends the system's full tag (en-ID, say) as hl, and YouTube answers
@@ -163,6 +173,8 @@ fun main() {
     val saved = AccountStore.load()
     AccountStore.use(saved)
     val player = Player(appScope)
+    LyricsRepository.follow(player, appScope)
+    appScope.launch(Dispatchers.IO) { Housekeeping.run() }
     MediaKeys.listen(
         onPlayPause = player::toggle,
         onNext = player::next,
@@ -190,155 +202,159 @@ fun main() {
     }
 
     application {
-        val windowState =
-            remember {
-                // Inside the desktop, clear of the taskbar, whatever the screen and its scaling.
-                val desktop = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
-                val width = minOf(WINDOW_WIDTH, desktop.width * WINDOW_FILL)
-                val height = minOf(WINDOW_HEIGHT, desktop.height * WINDOW_FILL)
-                WindowState(
-                    width = width.dp,
-                    height = height.dp,
-                    position = WindowPosition((desktop.x + (desktop.width - width) / 2).dp, (desktop.y + (desktop.height - height) / 2).dp),
-                )
-            }
-        var visible by remember { mutableStateOf(true) }
-        var account by remember { mutableStateOf(saved) }
-        var guest by remember { mutableStateOf(guestAllowed) }
-        val app =
-            remember {
-                AppState(player, appScope) {
-                    player.shutdown()
-                    AccountStore.clear()
-                    AccountStore.use(null)
-                    account = null
-                    guest = false
+        // Errors are written down; a window that has just closed is no reason for an error box.
+        CompositionLocalProvider(LocalWindowExceptionHandlerFactory provides ErrorLog.windows) {
+            val windowState =
+                remember {
+                    // Inside the desktop, clear of the taskbar, whatever the screen and its scaling.
+                    val desktop = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
+                    val width = minOf(WINDOW_WIDTH, desktop.width * WINDOW_FILL)
+                    val height = minOf(WINDOW_HEIGHT, desktop.height * WINDOW_FILL)
+                    WindowState(
+                        width = width.dp,
+                        height = height.dp,
+                        position = WindowPosition((desktop.x + (desktop.width - width) / 2).dp, (desktop.y + (desktop.height - height) / 2).dp),
+                    )
                 }
-            }
+            var visible by remember { mutableStateOf(true) }
+            var account by remember { mutableStateOf(saved) }
+            var guest by remember { mutableStateOf(guestAllowed) }
+            val app =
+                remember {
+                    AppState(player, appScope) {
+                        player.shutdown()
+                        AccountStore.clear()
+                        AccountStore.use(null)
+                        account = null
+                        guest = false
+                    }
+                }
 
-        fun close() {
-            if (Settings.closeToTray.value && keepsPlayingInTray) {
-                visible = false
-            } else {
-                player.shutdown()
-                exitApplication()
-            }
-        }
-
-        // Brought back to the running app: from the tray, or by opening Sonara again.
-        var frontRequests by remember { mutableStateOf(0) }
-
-        fun showWindow() {
-            app.miniPlayer = false
-            visible = true
-            windowState.isMinimized = false
-            frontRequests++
-        }
-
-        val launchRequests by SingleInstance.showRequests.collectAsState()
-        LaunchedEffect(launchRequests) { if (launchRequests > 0) showWindow() }
-
-        if (Os.isMac) {
-            LaunchedEffect(Unit) {
-                MacApp.install(
-                    onQuit = player::shutdown,
-                    onReopen = SingleInstance::requestShow,
-                    onSettings = {
-                        app.go(Route.Settings)
-                        showWindow()
-                    },
-                )
-                WindowChrome.onLeftFullscreen = { app.changeFullscreen(false) }
-            }
-        }
-
-        val state by player.state.collectAsState()
-        Tray(
-            icon = painterResource("icon.png"),
-            tooltip = state.current?.let { "${it.title} · ${it.artists}" } ?: "Sonara",
-            onAction = ::showWindow,
-            menu = {
-                Item("Show Sonara", onClick = ::showWindow)
-                Item(if (state.playing) "Pause" else "Play", onClick = player::toggle)
-                Item("Next", onClick = player::next)
-                Item("Previous", onClick = player::previous)
-                Separator()
-                Item("Quit") {
+            fun close() {
+                if (Settings.closeToTray.value && keepsPlayingInTray) {
+                    visible = false
+                } else {
                     player.shutdown()
                     exitApplication()
                 }
-            },
-        )
-
-        if (app.miniPlayer) {
-            Window(
-                onCloseRequest = { app.miniPlayer = false },
-                title = "Sonara mini player",
-                icon = painterResource("icon.png"),
-                undecorated = true,
-                resizable = false,
-                alwaysOnTop = true,
-                state = rememberWindowState(width = 420.dp, height = 88.dp, position = WindowPosition.Aligned(Alignment.BottomEnd)),
-            ) {
-                SonaraTheme(forceDark = true) { WindowDraggableArea { MiniPlayerContent(app, state) } }
             }
-        }
 
-        Window(
-            onCloseRequest = ::close,
-            visible = visible && !app.miniPlayer,
-            title = "Sonara",
-            icon = painterResource("icon.png"),
-            state = windowState,
-            onPreviewKeyEvent = { handleKey(app, it, ::close) },
-        ) {
-            if (!Os.isWindows) {
-                LaunchedEffect(app.fullscreen) {
-                    while (app.fullscreen) {
-                        delay(FULLSCREEN_CHECK_MS)
-                        WindowChrome.checkMacFullscreen()
+            // Brought back to the running app: from the tray, or by opening Sonara again.
+            var frontRequests by remember { mutableStateOf(0) }
+
+            fun showWindow() {
+                app.miniPlayer = false
+                visible = true
+                windowState.isMinimized = false
+                frontRequests++
+            }
+
+            val launchRequests by SingleInstance.showRequests.collectAsState()
+            LaunchedEffect(launchRequests) { if (launchRequests > 0) showWindow() }
+
+            if (Os.isMac) {
+                LaunchedEffect(Unit) {
+                    MacApp.install(
+                        onQuit = player::shutdown,
+                        onReopen = SingleInstance::requestShow,
+                        onSettings = {
+                            app.go(Route.Settings)
+                            showWindow()
+                        },
+                    )
+                    WindowChrome.onLeftFullscreen = { app.changeFullscreen(false) }
+                }
+            }
+
+            val state by player.state.collectAsState()
+            Tray(
+                icon = painterResource("icon.png"),
+                tooltip = state.current?.let { "${it.title} · ${it.artists}" } ?: "Sonara",
+                onAction = ::showWindow,
+                menu = {
+                    Item("Show Sonara", onClick = ::showWindow)
+                    Item(if (state.playing) "Pause" else "Play", onClick = player::toggle)
+                    Item("Next", onClick = player::next)
+                    Item("Previous", onClick = player::previous)
+                    Separator()
+                    Item("Quit") {
+                        player.shutdown()
+                        exitApplication()
+                    }
+                },
+            )
+
+            if (app.miniPlayer) {
+                Window(
+                    onCloseRequest = { app.miniPlayer = false },
+                    title = "Sonara mini player",
+                    icon = painterResource("icon.png"),
+                    undecorated = true,
+                    resizable = false,
+                    alwaysOnTop = true,
+                    state = rememberWindowState(width = 420.dp, height = 88.dp, position = WindowPosition.Aligned(Alignment.BottomEnd)),
+                ) {
+                    SonaraTheme(forceDark = true) { WindowDraggableArea { MiniPlayerContent(app, state) } }
+                }
+            }
+
+            Window(
+                onCloseRequest = ::close,
+                visible = visible && !app.miniPlayer,
+                title = "Sonara",
+                icon = painterResource("icon.png"),
+                state = windowState,
+                onPreviewKeyEvent = { handleKey(app, it, ::close) },
+            ) {
+                if (!Os.isWindows) {
+                    LaunchedEffect(app.fullscreen) {
+                        while (app.fullscreen) {
+                            delay(FULLSCREEN_CHECK_MS)
+                            WindowChrome.checkMacFullscreen()
+                        }
                     }
                 }
-            }
-            LaunchedEffect(Unit) {
-                window.minimumSize = MIN_WINDOW
-                WindowChrome.install(window)
-                // Coming back to the app shows what was done on the phone meanwhile.
-                window.addWindowFocusListener(
-                    object : WindowAdapter() {
-                        override fun windowGainedFocus(event: WindowEvent?) = app.syncFromAccount()
-                    },
-                )
-                while (true) {
-                    delay(BACKGROUND_SYNC_MS)
-                    app.syncFromAccount()
+                LaunchedEffect(Unit) {
+                    window.minimumSize = MIN_WINDOW
+                    WindowChrome.install(window)
+                    WindowsSession.install(window, onEnd = player::shutdown)
+                    // Coming back to the app shows what was done on the phone meanwhile.
+                    window.addWindowFocusListener(
+                        object : WindowAdapter() {
+                            override fun windowGainedFocus(event: WindowEvent?) = app.syncFromAccount()
+                        },
+                    )
+                    while (true) {
+                        delay(BACKGROUND_SYNC_MS)
+                        app.syncFromAccount()
+                    }
                 }
-            }
-            LaunchedEffect(frontRequests) {
-                if (frontRequests > 0) {
-                    delay(WINDOW_SHOW_MS)
-                    window.toFront()
-                    WindowChrome.bringToFront()
+                LaunchedEffect(frontRequests) {
+                    if (frontRequests > 0) {
+                        delay(WINDOW_SHOW_MS)
+                        window.toFront()
+                        WindowChrome.bringToFront()
+                    }
                 }
-            }
-            setSingletonImageLoaderFactory { context ->
-                ImageLoader.Builder(context)
-                    .components { add(OkHttpNetworkFetcherFactory()) }
-                    .diskCache { DiskCache.Builder().directory(AppFiles.root.resolve("images").toOkioPath()).maxSizeBytes(IMAGE_CACHE_BYTES).build() }
-                    .crossfade(true)
-                    .build()
-            }
-            SonaraTheme {
-                CompositionLocalProvider(LocalCloseWindow provides ::close) {
-                    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                        if (account == null && !guest) {
-                            WelcomeScreen(onSignedIn = {
-                                account = it
-                                window.toFront()
-                            })
-                        } else {
-                            LaunchedEffect(account) { app.loadAccount() }
-                            App(app)
+                setSingletonImageLoaderFactory { context ->
+                    ImageLoader.Builder(context)
+                        .components { add(OkHttpNetworkFetcherFactory()) }
+                        .diskCache { DiskCache.Builder().directory(AppFiles.root.resolve("images").toOkioPath()).maxSizeBytes(IMAGE_CACHE_BYTES).build() }
+                        .crossfade(true)
+                        .build()
+                }
+                SonaraTheme {
+                    CompositionLocalProvider(LocalCloseWindow provides ::close) {
+                        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                            if (account == null && !guest) {
+                                WelcomeScreen(onSignedIn = {
+                                    account = it
+                                    window.toFront()
+                                })
+                            } else {
+                                LaunchedEffect(account) { app.loadAccount() }
+                                App(app)
+                            }
                         }
                     }
                 }
@@ -564,27 +580,33 @@ private fun App(app: AppState) {
 /** The middle of the window: the current page, with the lyrics over it when they are open. */
 @Composable
 private fun CenterPane(app: AppState, state: PlayerState, modifier: Modifier) {
+    val online by Connection.online.collectAsState()
     Box(modifier.clip(ErShape.Medium).appBackdrop()) {
-        AnimatedContent(
-            targetState = app.route,
-            transitionSpec = { fadeIn(tween(PAGE_FADE_MS)) togetherWith fadeOut(tween(PAGE_FADE_MS)) },
-            label = "page",
-        ) { route ->
-            when (route) {
-                Route.Home -> HomeScreen(app)
-                Route.Browse -> BrowseScreen(app)
-                Route.Library -> LibraryScreen(app)
-                Route.Settings -> SettingsScreen(app)
-                is Route.Search -> SearchResultsScreen(route.query, app)
-                is Route.Album -> AlbumScreen(route.id, app)
-                is Route.Playlist -> PlaylistScreen(route.id, app)
-                is Route.Artist -> ArtistScreen(route.id, app)
-                is Route.Category -> CategoryScreen(route, app)
-                is Route.Radio -> RadioScreen(route, app)
-                Route.Downloads -> DownloadsScreen(app)
-                Route.History -> HistoryScreen(app)
-                is Route.ShelfAll -> ShelfAllScreen(route, app)
-                is Route.ArtistItems -> ArtistItemsScreen(route, app)
+        Column(Modifier.fillMaxSize()) {
+            AnimatedVisibility(!online) { OfflineStrip(app) }
+            AnimatedContent(
+                targetState = app.route,
+                transitionSpec = { fadeIn(tween(PAGE_FADE_MS)) togetherWith fadeOut(tween(PAGE_FADE_MS)) },
+                label = "page",
+                modifier = Modifier.weight(1f),
+            ) { route ->
+                when (route) {
+                    Route.Home -> HomeScreen(app)
+                    Route.Browse -> BrowseScreen(app)
+                    Route.Library -> LibraryScreen(app)
+                    Route.Settings -> SettingsScreen(app)
+                    is Route.Search -> SearchResultsScreen(route.query, app)
+                    is Route.Album -> AlbumScreen(route.id, app)
+                    is Route.Playlist -> PlaylistScreen(route.id, app)
+                    is Route.Artist -> ArtistScreen(route.id, app)
+                    is Route.Category -> CategoryScreen(route, app)
+                    is Route.Radio -> RadioScreen(route, app)
+                    Route.Downloads -> DownloadsScreen(app)
+                    Route.History -> HistoryScreen(app)
+                    is Route.Episodes -> EpisodesScreen(route.list, app)
+                    is Route.ShelfAll -> ShelfAllScreen(route, app)
+                    is Route.ArtistItems -> ArtistItemsScreen(route, app)
+                }
             }
         }
         AnimatedVisibility(

@@ -5,6 +5,8 @@
 
 package com.metrolist.music.ui.screens.playlist
 
+import com.metrolist.music.utils.ShareItem
+import com.metrolist.music.utils.ShareCard
 import com.metrolist.music.ui.component.DetailPane
 import com.metrolist.music.ui.theme.topBarBackdrop
 import com.metrolist.music.ui.theme.backdropTopBarColors
@@ -59,6 +61,7 @@ import com.metrolist.innertube.models.WatchEndpoint
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
+import com.metrolist.music.models.MediaMetadata
 import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.ErrorState
 import com.metrolist.music.ui.component.IconButton
@@ -78,41 +81,58 @@ import kotlinx.coroutines.withContext
 
 /** Route of [RadioScreen]; every value is URL-encoded. */
 fun radioRoute(
-    playlistId: String,
-    params: String?,
-    artistName: String,
+    endpoint: WatchEndpoint,
+    name: String,
     thumbnailUrl: String?,
-): String =
-    "radio/${android.net.Uri.encode(playlistId)}?params=${android.net.Uri.encode(params.orEmpty())}" +
-        "&name=${android.net.Uri.encode(artistName)}&thumbnail=${android.net.Uri.encode(thumbnailUrl.orEmpty())}"
+    round: Boolean = false,
+): String {
+    fun enc(value: String?) = android.net.Uri.encode(value.orEmpty())
+    return "radio?playlistId=${enc(endpoint.playlistId)}&videoId=${enc(endpoint.videoId)}&params=${enc(endpoint.params)}" +
+        "&name=${enc(name)}&thumbnail=${enc(thumbnailUrl)}&round=$round"
+}
+
+/** A song's radio: YouTube Music's mix that starts from it. */
+fun songRadioRoute(song: MediaMetadata): String =
+    radioRoute(
+        endpoint = WatchEndpoint(videoId = song.id, playlistId = "RDAMVM${song.id}"),
+        name = song.title,
+        thumbnailUrl = song.thumbnailUrl,
+    )
+
+/** An artist's radio, with the artist's photo in a circle. */
+fun artistRadioRoute(endpoint: WatchEndpoint, artistName: String, thumbnailUrl: String?): String =
+    radioRoute(endpoint, artistName, thumbnailUrl, round = true)
 
 /**
- * An artist's radio as a page, like a playlist: the songs YouTube Music lines up for it, with
- * Play and Shuffle, instead of starting to play straight away. Tapping a song plays the radio
- * from that song; it keeps going past the list, as radio does.
+ * A radio (an artist's, a song's or a playlist's) as a page, like a playlist: the songs YouTube
+ * Music lines up for it, with Play and Shuffle, instead of starting to play straight away.
+ * Tapping a song plays the radio from that song; it keeps going past the list, as radio does.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun RadioScreen(
     navController: NavController,
-    playlistId: String,
+    playlistId: String?,
+    videoId: String?,
     params: String?,
-    artistName: String,
+    name: String,
     thumbnailUrl: String?,
+    round: Boolean,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
+    val context = androidx.compose.ui.platform.LocalContext.current
     val menuState = LocalMenuState.current
     val haptic = LocalHapticFeedback.current
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
-    val endpoint = remember(playlistId, params) { WatchEndpoint(playlistId = playlistId, params = params) }
+    val endpoint = remember(playlistId, videoId, params) { WatchEndpoint(videoId = videoId, playlistId = playlistId, params = params) }
 
     var attempt by remember { mutableIntStateOf(0) }
     val songs by produceState<Result<List<SongItem>>?>(initialValue = null, endpoint, attempt) {
         value = null
         value = withContext(Dispatchers.IO) { YouTube.next(endpoint).map { it.items } }
     }
-    val title = stringResource(R.string.er_radio_title, artistName)
+    val title = stringResource(R.string.er_radio_title, name)
 
     fun play(startAt: SongItem?, shuffle: Boolean) {
         playerConnection.player.shuffleModeEnabled = shuffle
@@ -136,9 +156,24 @@ fun RadioScreen(
                     loaded?.let { pluralStringResource(R.plurals.n_song, it.size, it.size) },
                 ),
                 thumbnailUrl = thumbnailUrl,
+                round = round,
                 canPlay = !loaded.isNullOrEmpty(),
                 onPlay = { play(null, shuffle = false) },
                 onShuffle = { play(null, shuffle = true) },
+                // The radio as a card with its cover and Sonara's name, and its link.
+                onShare = {
+                    ShareCard.share(
+                        context,
+                        ShareItem(
+                            kind = context.getString(R.string.radio),
+                            title = title,
+                            subtitle = loaded?.take(SHARE_ARTISTS)?.flatMap { song -> song.artists.map { it.name } }?.distinct()?.take(SHARE_ARTISTS)?.joinToString(),
+                            coverUrl = thumbnailUrl,
+                            link = radioLink(endpoint),
+                            round = round,
+                        ),
+                    )
+                },
             )
         }
         }
@@ -194,15 +229,17 @@ fun RadioScreen(
     )
 }
 
-/** The artist's photo in a circle with a teal radio badge, the title, and Play / Shuffle. */
+/** The cover (an artist's photo in a circle) with a teal radio badge, the title, and Play / Shuffle. */
 @Composable
 private fun RadioHeader(
     title: String,
     subtitle: String,
     thumbnailUrl: String?,
+    round: Boolean,
     canPlay: Boolean,
     onPlay: () -> Unit,
     onShuffle: () -> Unit,
+    onShare: () -> Unit,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -210,6 +247,7 @@ private fun RadioHeader(
             .fillMaxWidth()
             .padding(horizontal = Spacing.Gutter, vertical = Spacing.L),
     ) {
+        val artShape = if (round) CircleShape else ErShape.Large
         Box {
             AsyncImage(
                 model = thumbnailUrl,
@@ -217,8 +255,8 @@ private fun RadioHeader(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(Size.HeaderArt)
-                    .shadow(Spacing.L, CircleShape, clip = false)
-                    .clip(CircleShape)
+                    .shadow(Spacing.L, artShape, clip = false)
+                    .clip(artShape)
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh),
             )
             Box(
@@ -249,9 +287,25 @@ private fun RadioHeader(
         Spacer(Modifier.height(Spacing.XS))
         Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(Spacing.L))
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.M)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.M), verticalAlignment = Alignment.CenterVertically) {
             PrimaryButton(text = stringResource(R.string.play), onClick = onPlay, icon = R.drawable.play, enabled = canPlay)
             SecondaryButton(text = stringResource(R.string.shuffle), onClick = onShuffle, icon = R.drawable.shuffle, enabled = canPlay)
+            androidx.compose.material3.IconButton(onClick = onShare) {
+                Icon(painterResource(R.drawable.share), contentDescription = stringResource(R.string.share))
+            }
         }
     }
 }
+
+/** The radio on YouTube Music: from its song when it has one, else as a list. */
+private fun radioLink(endpoint: WatchEndpoint): String {
+    val list = endpoint.playlistId
+    return when {
+        endpoint.videoId != null && list != null -> "https://music.youtube.com/watch?v=${endpoint.videoId}&list=$list"
+        endpoint.videoId != null -> "https://music.youtube.com/watch?v=${endpoint.videoId}"
+        else -> "https://music.youtube.com/playlist?list=$list"
+    }
+}
+
+/** How many artists name the radio under its title on the card. */
+private const val SHARE_ARTISTS = 3

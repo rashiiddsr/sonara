@@ -5,6 +5,10 @@
 
 package com.metrolist.music.ui.screens.library
 
+import com.metrolist.music.ui.theme.Spacing
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import com.metrolist.music.utils.joinByBullet
 import com.metrolist.music.ui.component.AutoPlaylistArt
 import com.metrolist.music.ui.component.AutoArt
@@ -71,6 +75,16 @@ fun LibraryPodcastsScreen(
                 navController.navigate("online_playlist/SE")
             }
         }
+        if (podcasts.isEmpty()) {
+            item(key = "empty", contentType = CONTENT_TYPE_EMPTY) {
+                Text(
+                    text = stringResource(R.string.er_no_podcasts_message),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = Spacing.Gutter, vertical = Spacing.L),
+                )
+            }
+        }
         items(podcasts, key = { it.id }, contentType = { CONTENT_TYPE_PODCAST }) { podcast ->
             ListItem(
                 title = podcast.title,
@@ -107,3 +121,4 @@ private fun Shortcut(
 private const val CONTENT_TYPE_HEADER = "header"
 private const val CONTENT_TYPE_SHORTCUT = "shortcut"
 private const val CONTENT_TYPE_PODCAST = "podcast"
+private const val CONTENT_TYPE_EMPTY = "empty"

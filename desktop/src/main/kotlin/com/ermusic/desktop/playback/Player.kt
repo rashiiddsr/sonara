@@ -85,6 +85,8 @@ data class PlayerState(
     val volume: Float = 1f,
     val muted: Boolean = false,
     val error: String? = null,
+    /** The song can't be fetched without a connection; it starts by itself when the connection is back. */
+    val offline: Boolean = false,
     val sleepAtMs: Long? = null,
     val sleepAfterSong: Boolean = false,
 ) {
@@ -289,24 +291,66 @@ class Player(private val scope: CoroutineScope) {
         session = null
         val track = mutableState.value.queue[index]
         mutablePosition.value = fromMs
-        mutableState.update { it.copy(index = index, playing = true, loading = true, durationMs = track.durationMs, error = null) }
+        mutableState.update { it.copy(index = index, playing = true, loading = true, durationMs = track.durationMs, error = null, offline = false) }
         History.add(track)
         reportWhenListened(track)
         loadJob =
             scope.launch(Dispatchers.IO) {
-                val song =
-                    try {
-                        SongCache.get(track.id)
-                    } catch (error: CancellationException) {
-                        throw error
-                    } catch (error: Exception) {
-                        mutableState.update { it.copy(loading = false, playing = false, error = "Couldn't load this song (${error.message})") }
-                        return@launch
-                    }
+                val song = fetch(track, index) ?: return@launch
                 if (!isActive) return@launch
+                failedInARow = 0
                 session = Session(song, fromMs, crossfadeMs).also { it.start() }
                 prepareNext()
             }
+    }
+
+    private var failedInARow = 0
+
+    /**
+     * The song's audio, fetched whole. Without a connection, a song further on that is already on
+     * the computer plays instead; with none, the player waits and starts this song by itself once
+     * the connection is back, instead of giving up. A song YouTube won't give, while online, is
+     * skipped, as YouTube Music does.
+     */
+    private suspend fun fetch(track: Track, index: Int): LocalSong? {
+        while (true) {
+            try {
+                return SongCache.get(track.id)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                if (Connection.check()) {
+                    skipUnplayable()
+                    return null
+                }
+                savedAfter(index)?.let { saved ->
+                    load(saved)
+                    return null
+                }
+                mutableState.update { it.copy(loading = false, playing = false, offline = true, error = null) }
+                Connection.awaitOnline()
+                mutableState.update { it.copy(loading = true, playing = true, offline = false) }
+            }
+        }
+    }
+
+    /** The next song in the queue that is already on the computer. */
+    private fun savedAfter(index: Int): Int? {
+        val queue = mutableState.value.queue
+        return ((index + 1) until queue.size).firstOrNull { SongCache.isStored(queue[it].id) }
+    }
+
+    private fun skipUnplayable() {
+        failedInARow++
+        val state = mutableState.value
+        val next = state.index + 1
+        if (failedInARow < SKIP_AT_MOST && next in state.queue.indices) {
+            load(next)
+            mutableState.update { it.copy(error = "Skipped a song that can't be played") }
+        } else {
+            failedInARow = 0
+            mutableState.update { it.copy(loading = false, playing = false, error = "This song can't be played right now") }
+        }
     }
 
     /** Tells YouTube Music about the song once it has really been listened to, as the phone does. */
@@ -401,7 +445,7 @@ class Player(private val scope: CoroutineScope) {
                 }
             } catch (error: Exception) {
                 if (!cancelled) {
-                    mutableState.update { it.copy(loading = false, playing = false, error = "Playback failed (${error.message})") }
+                    mutableState.update { it.copy(loading = false, playing = false, error = "This song can't be played right now") }
                     session = null
                 }
                 return
@@ -522,6 +566,7 @@ class Player(private val scope: CoroutineScope) {
         const val POSITION_PUBLISH_MS = 40L
         const val RESTART_WITHIN_MS = 3_000L
         const val RADIO_TOP_UP_AT = 3
+        const val SKIP_AT_MOST = 3
         const val DECIBEL_BASE = 10.0
         const val DECIBELS_PER_DECADE = 20.0
         const val MS_PER_MINUTE = 60_000L

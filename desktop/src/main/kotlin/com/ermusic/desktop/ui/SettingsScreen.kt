@@ -170,7 +170,17 @@ fun SettingsScreen(app: AppState) {
             }
             item(key = "storage", contentType = "group") {
                 Group("Storage") {
-                    SettingRow("Song cache", "%.0f MB. Songs you downloaded are kept.".format(cacheBytes / BYTES_PER_MB)) {
+                    ChoiceRow(
+                        "Keep for playing again",
+                        "Songs played lately stay on the computer, so they start at once and play offline. The oldest go first.",
+                        SongCache.sizes.map { it to if (it < MB_PER_GB) "$it MB" else "${it / MB_PER_GB} GB" },
+                        Settings.songCacheMb.value,
+                    ) {
+                        Settings.songCacheMb.value = it
+                        SongCache.trim()
+                        cacheBytes = SongCache.sizeBytes()
+                    }
+                    SettingRow("Song cache", "%.0f MB in use. Songs you downloaded are kept.".format(cacheBytes / BYTES_PER_MB)) {
                         OutlinedButton(onClick = {
                             SongCache.clear()
                             cacheBytes = SongCache.sizeBytes()
@@ -191,7 +201,7 @@ fun SettingsScreen(app: AppState) {
             }
             item(key = "about", contentType = "group") {
                 Group("About") {
-                    Text("Sonara 2.3.5 for ${Os.name}", style = MaterialTheme.typography.titleSmall)
+                    Text("Sonara 2.4.0 for ${Os.name}", style = MaterialTheme.typography.titleSmall)
                     Spacer(Modifier.height(Spacing.XS))
                     Text("Free software under GPL-3.0, derived from Metrolist.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -223,6 +233,7 @@ private fun EqualizerControls() {
 
 private val EQ_SLIDER_HEIGHT = 140.dp
 private const val BYTES_PER_MB = 1_048_576.0
+private const val MB_PER_GB = 1024
 private const val MAX_CROSSFADE = 12
 private val CROSSFADE_WIDTH = 160.dp
 private val MENU_HEIGHT = 320.dp

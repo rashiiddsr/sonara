@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="../../releases/latest"><img alt="Version 2.3.5" src="https://img.shields.io/badge/version-2.3.5-2EE6C5?style=for-the-badge&labelColor=12161A"></a>
+  <a href="../../releases/latest"><img alt="Version 2.4.0" src="https://img.shields.io/badge/version-2.4.0-2EE6C5?style=for-the-badge&labelColor=12161A"></a>
   <img alt="Android, Windows, macOS, Linux" src="https://img.shields.io/badge/Android%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux-12161A?style=for-the-badge">
   <a href="LICENSE"><img alt="License GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-12161A?style=for-the-badge"></a>
 </p>
@@ -56,7 +56,7 @@ keyboard shortcuts, playing on from the tray or menu bar, and opening at sign-in
 Download the file for your device from the [latest release](../../releases/latest).
 
 <details>
-<summary><b>Android</b> · <code>Sonara-2.3.5.apk</code> · Android 8.0 or newer</summary>
+<summary><b>Android</b> · <code>Sonara-2.4.0.apk</code> · Android 8.0 or newer</summary>
 
 1. Open the APK on your phone.
 2. If asked, allow your browser or file manager to install apps.
@@ -65,7 +65,7 @@ Download the file for your device from the [latest release](../../releases/lates
 </details>
 
 <details>
-<summary><b>Windows</b> · <code>Sonara-2.3.5.msi</code> · Windows 10 or 11, 64-bit</summary>
+<summary><b>Windows</b> · <code>Sonara-2.4.0.msi</code> · Windows 10 or 11, 64-bit</summary>
 
 1. Run the MSI. If SmartScreen appears, choose **More info → Run anyway**.
 2. Follow the installer; it installs for your user, no administrator needed.
@@ -74,7 +74,7 @@ Download the file for your device from the [latest release](../../releases/lates
 </details>
 
 <details>
-<summary><b>macOS</b> · <code>Sonara-2.3.5-mac-arm64.dmg</code> or <code>Sonara-2.3.5-mac-intel.dmg</code> · macOS 12 or newer</summary>
+<summary><b>macOS</b> · <code>Sonara-2.4.0-mac-arm64.dmg</code> or <code>Sonara-2.4.0-mac-intel.dmg</code> · macOS 12 or newer</summary>
 
 Take **arm64** for a Mac with Apple Silicon (M1 and later), **intel** for an Intel Mac. Not sure?
 Apple menu → **About This Mac**: "Chip Apple M…" is Apple Silicon, "Processor Intel" is Intel.
@@ -91,12 +91,12 @@ Apple menu → **About This Mac**: "Chip Apple M…" is Apple Silicon, "Processo
 </details>
 
 <details>
-<summary><b>Linux</b> · <code>Sonara-2.3.5-linux-amd64.deb</code> or <code>Sonara-2.3.5-linux-x86_64.AppImage</code> · 64-bit PC</summary>
+<summary><b>Linux</b> · <code>Sonara-2.4.0-linux-amd64.deb</code> or <code>Sonara-2.4.0-linux-x86_64.AppImage</code> · 64-bit PC</summary>
 
 **Debian, Ubuntu, Linux Mint and the like:** install the .deb, by opening it or with
 
 ```bash
-sudo apt install ./Sonara-2.3.5-linux-amd64.deb
+sudo apt install ./Sonara-2.4.0-linux-amd64.deb
 ```
 
 Sonara then shows in your apps. A newer .deb installs over the old one and keeps your data.
@@ -104,8 +104,8 @@ Sonara then shows in your apps. A newer .deb installs over the old one and keeps
 **Any other distribution:** the AppImage runs as it is, no installing needed:
 
 ```bash
-chmod +x Sonara-2.3.5-linux-x86_64.AppImage
-./Sonara-2.3.5-linux-x86_64.AppImage
+chmod +x Sonara-2.4.0-linux-x86_64.AppImage
+./Sonara-2.4.0-linux-x86_64.AppImage
 ```
 
 Signing in opens Google's page in **Google Chrome, Chromium, Microsoft Edge, Brave or Vivaldi**

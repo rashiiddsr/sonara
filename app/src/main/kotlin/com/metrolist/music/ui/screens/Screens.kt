@@ -24,10 +24,13 @@ sealed class Screens(
         route = "home"
     )
 
+    /**
+     * Browse: new releases, charts, genres and moods, with search at its top.
+     */
     object Search : Screens(
-        titleId = R.string.search,
-        iconIdInactive = R.drawable.nav_search_off,
-        iconIdActive = R.drawable.nav_search_on,
+        titleId = R.string.er_browse,
+        iconIdInactive = R.drawable.nav_browse_off,
+        iconIdActive = R.drawable.nav_browse_on,
         route = "search_input"
     )
 

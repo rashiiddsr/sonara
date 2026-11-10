@@ -68,6 +68,7 @@ sealed interface Route {
     data class Category(val browseId: String, val params: String?, val title: String) : Route
     data class Radio(val title: String, val art: String?, val endpoint: WatchEndpoint) : Route
     data object Downloads : Route
+    data class Episodes(val list: EpisodeList) : Route
     data object History : Route
     data class ShelfAll(val title: String, val items: List<YTItem>) : Route
     data class ArtistItems(val title: String, val endpoint: BrowseEndpoint) : Route

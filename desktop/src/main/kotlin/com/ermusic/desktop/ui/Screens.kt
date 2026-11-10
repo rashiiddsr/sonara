@@ -5,6 +5,8 @@
 
 package com.ermusic.desktop.ui
 
+import androidx.compose.runtime.collectAsState
+import com.ermusic.desktop.playback.Connection
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -78,19 +80,28 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import java.time.LocalTime
 
-/** A page's data: still loading (null), or the answer. */
+/**
+ * A page's data: still loading (null), or the answer. A page that failed for want of a connection
+ * loads again by itself once the connection is back.
+ */
 @Composable
 private fun <T> load(vararg keys: Any?, fetch: suspend () -> Result<T>): State<Result<T>?> =
     produceState<Result<T>?>(null, *keys) {
         value = null
-        value = fetch()
+        while (true) {
+            val result = fetch()
+            value = result
+            if (result.isSuccess || Connection.check()) break
+            Connection.awaitOnline()
+        }
     }
 
 @Composable
 private fun <T> Loaded(result: Result<T>?, skeleton: @Composable () -> Unit, content: @Composable (T) -> Unit) {
+    val online by Connection.online.collectAsState()
     when {
         result == null -> skeleton()
-        result.isFailure -> Message("Couldn't load this page. Check your connection and try again.")
+        result.isFailure -> Message(if (online) "Couldn't load this page. Try again in a moment." else OFFLINE_PAGE)
         else -> content(result.getOrThrow())
     }
 }
@@ -229,6 +240,7 @@ private const val SONG_GRID_MINIMUM = 8
 @Composable
 fun HomeScreen(app: AppState) {
     val home = app.home
+    val online by Connection.online.collectAsState()
     val list = home.list
 
     suspend fun loadMore() {
@@ -246,7 +258,16 @@ fun HomeScreen(app: AppState) {
         home.failed = false
         home.sections.clear()
         home.continuation = null
-        val first = YouTube.home(params = home.chip?.endpoint?.params).getOrNull()
+        var first = YouTube.home(params = home.chip?.endpoint?.params).getOrNull()
+        // Offline: show it, and load Home once the connection is back.
+        while (first == null && !Connection.check()) {
+            home.failed = true
+            home.loading = false
+            Connection.awaitOnline()
+            home.failed = false
+            home.loading = true
+            first = YouTube.home(params = home.chip?.endpoint?.params).getOrNull()
+        }
         if (first == null) {
             home.failed = true
         } else {
@@ -266,7 +287,7 @@ fun HomeScreen(app: AppState) {
     }
 
     when {
-        home.failed -> Message("Couldn't load Home. Check your connection and try again.")
+        home.failed -> Message(if (online) "Couldn't load Home. Try again in a moment." else OFFLINE_PAGE)
         home.loading && home.sections.isEmpty() -> HomeSkeleton()
         else ->
             ScrollingColumn(Modifier.fillMaxSize(), state = list, contentPadding = PagePadding) {
@@ -488,8 +509,7 @@ private suspend fun libraryItems(tab: LibraryTab): List<YTItem> =
                 val playlists = async { libraryPage(PLAYLISTS_PAGE).withoutLiked() }
                 val albums = async { libraryPage(ALBUMS_PAGE) }
                 val artists = async { libraryPage(ARTISTS_PAGE) }
-                val podcasts = async { YouTube.savedPodcastShows().getOrDefault(emptyList()) }
-                playlists.await() + albums.await() + artists.await() + podcasts.await()
+                playlists.await() + albums.await() + artists.await()
             }
         LibraryTab.Playlists -> libraryPage(PLAYLISTS_PAGE).withoutLiked()
         LibraryTab.Albums -> libraryPage(ALBUMS_PAGE)
@@ -501,6 +521,7 @@ private suspend fun libraryItems(tab: LibraryTab): List<YTItem> =
 private sealed interface LibraryEntry {
     data object Liked : LibraryEntry
     data object Downloaded : LibraryEntry
+    data class Episodes(val list: EpisodeList) : LibraryEntry
     data class Saved(val item: YTItem) : LibraryEntry
 }
 
@@ -520,6 +541,12 @@ private fun CollectionCard(title: String, subtitle: String, symbol: String, colo
 private val LikedTile = listOf(Color(0xFFF26DB5), Color(0xFF9F6CF2))
 private val DownloadsTile = listOf(Color(0xFF1FB89C), Color(0xFF3A7BD5))
 
+/** The account's two podcast lists, as YouTube Music keeps them at the top of Podcasts. */
+enum class EpisodeList(val title: String, val subtitle: String, val symbol: String, val colors: List<Color>) {
+    New("New episodes", "Auto playlist", "mic", listOf(Color(0xFFF7A072), Color(0xFFB98BF2))),
+    Later("Episodes for later", "Saved episodes", "history", listOf(Color(0xFFC9A5F5), Color(0xFF8C9DF2))),
+}
+
 fun songCount(count: Int) = if (count == 1) "1 song" else "$count songs"
 
 @Composable
@@ -532,10 +559,22 @@ fun LibraryScreen(app: AppState) {
             items(LibraryTab.entries, key = { it.name }, contentType = { "chip" }) { option -> Chip(option.label, option == tab) { tab = option } }
         }
         Loaded(page, skeleton = { Row { repeat(SKELETON_CARDS) { CardSkeleton() } } }) { items ->
-            val collections = if (tab == LibraryTab.All || tab == LibraryTab.Playlists) listOf(LibraryEntry.Liked, LibraryEntry.Downloaded) else emptyList()
+            val collections =
+                when (tab) {
+                    LibraryTab.All, LibraryTab.Playlists -> listOf(LibraryEntry.Liked, LibraryEntry.Downloaded)
+                    LibraryTab.Podcasts -> EpisodeList.entries.map { LibraryEntry.Episodes(it) }
+                    else -> emptyList()
+                }
             val entries = collections + items.filter { it.allowed() }.map { LibraryEntry.Saved(it) }
             if (entries.isEmpty()) {
-                Message("Nothing here yet.")
+                Message(
+                    when (tab) {
+                        LibraryTab.Albums -> "Albums you save on YouTube Music show up here."
+                        LibraryTab.Artists -> "No artists yet. Artists you subscribe to on YouTube Music show up here."
+                        LibraryTab.Podcasts -> "Shows you save show up here."
+                        else -> "Playlists you make or save show up here."
+                    },
+                )
             } else {
                 ScrollingColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(end = Spacing.L, bottom = Spacing.XXL)) {
                     item(key = "grid", contentType = "grid") {
@@ -543,6 +582,7 @@ fun LibraryScreen(app: AppState) {
                             when (entry) {
                                 LibraryEntry.Liked -> CollectionCard("Liked songs", "Playlist · " + songCount(app.likedIds.size), "favorite", LikedTile, width) { app.go(Route.Playlist(LIKED_PLAYLIST_ID)) }
                                 LibraryEntry.Downloaded -> CollectionCard("Downloads", "Playlist · " + songCount(Downloads.tracks.size), "download", DownloadsTile, width) { app.go(Route.Downloads) }
+                                is LibraryEntry.Episodes -> entry.list.let { list -> CollectionCard(list.title, list.subtitle, list.symbol, list.colors, width) { app.go(Route.Episodes(list)) } }
                                 is LibraryEntry.Saved -> ItemCard(entry.item, app, width = width)
                             }
                         }
@@ -797,6 +837,35 @@ fun RadioScreen(route: Route.Radio, app: AppState) {
 }
 
 private const val RADIO_PAGES = 2
+
+fun episodeCount(count: Int) = if (count == 1) "1 episode" else "$count episodes"
+
+/** New episodes of the saved shows, or the episodes saved for later, as a playlist. */
+@Composable
+fun EpisodesScreen(list: EpisodeList, app: AppState) {
+    val page by load(list, app.libraryVersion) {
+        when (list) {
+            EpisodeList.New -> YouTube.newEpisodes()
+            EpisodeList.Later -> YouTube.episodesForLater()
+        }
+    }
+    Loaded(page, skeleton = { DetailSkeleton() }) { episodes ->
+        val tracks = episodes.tracks()
+        val empty =
+            when (list) {
+                EpisodeList.New -> "New episodes of the shows you save show up here."
+                EpisodeList.Later -> "Episodes you save for later show up here."
+            }
+        SongList(episodes, app, header = {
+            Column {
+                DetailHeader(episodes.firstOrNull()?.thumbnail, "Podcast", list.title, if (episodes.isEmpty()) empty else episodeCount(episodes.size), app) {
+                    PlayShuffle({ app.player.play(tracks) }, { app.player.play(tracks.shuffled()) }, tracks.isNotEmpty())
+                    if (tracks.isNotEmpty()) SymbolButton("download", "Download") { app.download(tracks) }
+                }
+            }
+        })
+    }
+}
 
 @Composable
 fun ArtistScreen(id: String, app: AppState) {

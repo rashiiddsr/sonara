@@ -5,6 +5,10 @@
 
 package com.metrolist.music.ui.menu
 
+import com.metrolist.music.utils.ShareItem
+import com.metrolist.music.utils.ShareCard
+import com.metrolist.music.LocalNavController
+import com.metrolist.music.ui.screens.playlist.radioRoute
 import com.metrolist.music.ui.component.ErToast
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -108,6 +112,7 @@ fun YouTubePlaylistMenu(
     canSelect: Boolean = false,
 ) {
     val context = LocalContext.current
+    val navController = LocalNavController.current
     val database = LocalDatabase.current
     val downloadUtil = LocalDownloadUtil.current
     val playerConnection = LocalPlayerConnection.current ?: return
@@ -427,7 +432,7 @@ fun YouTubePlaylistMenu(
                                     },
                                     text = stringResource(R.string.start_radio),
                                     onClick = {
-                                        playerConnection.playQueue(YouTubeQueue(radioEndpoint))
+                                        navController.navigate(radioRoute(radioEndpoint, playlist.title, playlist.thumbnail))
                                         onDismiss()
                                     },
                                 ),
@@ -447,9 +452,16 @@ fun YouTubePlaylistMenu(
                                 text = stringResource(R.string.share),
                                 onClick = {
                                     onDismiss()
-                                    val send = Intent(Intent.ACTION_SEND).setType("text/plain")
-                                        .putExtra(Intent.EXTRA_TEXT, "https://music.youtube.com/playlist?list=${playlist.id.removePrefix("VL")}")
-                                    context.startActivity(Intent.createChooser(send, null))
+                                    ShareCard.share(
+                                        context,
+                                        ShareItem(
+                                            kind = context.getString(R.string.er_type_playlist),
+                                            title = playlist.title,
+                                            subtitle = listOfNotNull(playlist.author?.name, playlist.songCountText).joinToString(" · ").ifEmpty { null },
+                                            coverUrl = playlist.thumbnail,
+                                            link = "https://music.youtube.com/playlist?list=${playlist.id.removePrefix("VL")}",
+                                        ),
+                                    )
                                 },
                             ),
                         )

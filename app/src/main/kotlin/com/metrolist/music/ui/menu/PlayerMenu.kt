@@ -5,8 +5,9 @@
 
 package com.metrolist.music.ui.menu
 
-import com.metrolist.music.ui.component.ErToast
-import android.content.Intent
+import com.metrolist.music.utils.ShareItem
+import com.metrolist.music.utils.ShareCard
+import com.metrolist.music.ui.screens.playlist.songRadioRoute
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -59,15 +60,6 @@ import com.metrolist.music.ui.theme.Spacing
 import com.metrolist.music.ui.utils.podcastRoute
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
-/** Opens the system share sheet for a YouTube Music link. */
-fun shareLink(context: android.content.Context, title: String, link: String) {
-    val send = Intent(Intent.ACTION_SEND)
-        .setType("text/plain")
-        .putExtra(Intent.EXTRA_SUBJECT, title)
-        .putExtra(Intent.EXTRA_TEXT, link)
-    context.startActivity(Intent.createChooser(send, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-}
 
 @Composable
 private fun MenuIcon(icon: Int) {
@@ -135,7 +127,6 @@ fun PlayerMenu(
         }
     }
 
-    val startingRadioText = stringResource(R.string.starting_radio)
     LazyColumn(
         contentPadding = PaddingValues(
             top = Spacing.S,
@@ -148,9 +139,10 @@ fun PlayerMenu(
                     NewAction(
                         icon = { MenuIcon(R.drawable.radio) },
                         text = stringResource(R.string.start_radio),
+                        // Opens the song's radio as a page; the song keeps playing meanwhile.
                         onClick = {
-                            ErToast.show(context, startingRadioText)
-                            playerConnection.startRadioSeamlessly()
+                            navController.navigate(songRadioRoute(mediaMetadata))
+                            playerBottomSheetState.collapseSoft()
                             onDismiss()
                         },
                     ),
@@ -163,7 +155,16 @@ fun PlayerMenu(
                         icon = { MenuIcon(R.drawable.share) },
                         text = stringResource(R.string.share),
                         onClick = {
-                            shareLink(context, mediaMetadata.title, "https://music.youtube.com/watch?v=${mediaMetadata.id}")
+                            ShareCard.share(
+                                context,
+                                ShareItem(
+                                    kind = context.getString(R.string.er_type_song),
+                                    title = mediaMetadata.title,
+                                    subtitle = mediaMetadata.artists.joinToString { it.name },
+                                    coverUrl = mediaMetadata.thumbnailUrl,
+                                    link = "https://music.youtube.com/watch?v=${mediaMetadata.id}",
+                                ),
+                            )
                             onDismiss()
                         },
                     ),

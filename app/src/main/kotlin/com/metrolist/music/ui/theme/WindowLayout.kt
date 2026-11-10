@@ -58,8 +58,11 @@ data class WindowLayout(
         /** The cover and controls pane of a two-pane page or the player. */
         val SidePaneWidth = 360.dp
 
-        /** The floating mini player's widest size on tablets. */
-        val MiniPlayerMaxWidth = 640.dp
+        /** Speed dial tiles on a tablet: fewer and larger than a phone's. */
+        val TabletTile = 168.dp
+
+        /** The smallest card in a grid of cards (Browse's genres and moods) on a tablet. */
+        val TabletGridCard = 208.dp
 
         /** The navigation rail beside the pages on tablets. */
         val RailWidth: Dp get() = Size.NavBar + Spacing.S

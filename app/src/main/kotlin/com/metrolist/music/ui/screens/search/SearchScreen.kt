@@ -14,7 +14,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.BackHandler
 import android.Manifest
 import android.content.pm.PackageManager
-import android.speech.SpeechRecognizer
 import androidx.core.content.ContextCompat
 import com.metrolist.music.LocalIsOnline
 import com.metrolist.music.ui.component.OfflineState
@@ -139,6 +138,13 @@ fun SearchScreen(
     }
     val pauseSearchHistory by rememberPreference(PauseSearchHistoryKey, defaultValue = false)
     var focused by rememberSaveable { mutableStateOf(query.text.isNotEmpty()) }
+    LaunchedEffect(focused) { SearchState.typing = focused }
+    DisposableEffect(Unit) { onDispose { SearchState.typing = false } }
+    fun leaveSearch() {
+        focusManager.clearFocus(force = true)
+        query = TextFieldValue()
+        focused = false
+    }
     LaunchedEffect(focused) {
         if (focused && !isPlayerExpanded) {
             kotlinx.coroutines.delay(100)
@@ -148,11 +154,7 @@ fun SearchScreen(
             }
         }
     }
-    BackHandler(enabled = focused) {
-        focusManager.clearFocus(force = true)
-        query = TextFieldValue()
-        focused = false
-    }
+    BackHandler(enabled = focused) { leaveSearch() }
 
     fun handleSearch(searchQuery: String) {
         if (searchQuery.isEmpty()) {
@@ -206,7 +208,7 @@ fun SearchScreen(
     val onSearchFromSuggestion: (String) -> Unit = { searchQuery -> handleSearch(searchQuery) }
 
     val context = LocalContext.current
-    val voiceAvailable = remember { SpeechRecognizer.isRecognitionAvailable(context) }
+    val voiceAvailable = remember { speechRecognitionAvailable(context) }
     var showVoice by remember { mutableStateOf(false) }
     var showRecognize by remember { mutableStateOf(false) }
     // Both mic buttons share one permission request; this says which sheet opens once granted.
@@ -230,9 +232,11 @@ fun SearchScreen(
             else -> showVoice = true
         }
     }
+    // The mic is always there while online. A device with no speech service (some emulators,
+    // phones without Google's app) says so instead of hiding the button.
     val startVoiceSearch: (() -> Unit)? =
-        if (voiceAvailable && !offlineMode) {
-            { withMic(false) }
+        if (!offlineMode) {
+            { if (voiceAvailable) withMic(false) else ErToast.show(context, R.string.er_voice_unavailable) }
         } else {
             null
         }
@@ -349,11 +353,7 @@ fun SearchScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        focusManager.clearFocus(force = true)
-                        query = TextFieldValue()
-                        focused = false
-                    }) {
+                    IconButton(onClick = ::leaveSearch) {
                         Icon(
                             painter = painterResource(R.drawable.arrow_back),
                             contentDescription = stringResource(R.string.dismiss),

@@ -242,6 +242,27 @@ fun Loading(modifier: Modifier = Modifier) {
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
 }
 
+const val OFFLINE_PAGE = "You're offline. Downloads and songs you've played lately still play; this page loads when you're back online."
+const val OFFLINE_SONG = "Offline · plays when you're back online"
+
+/** A strip over the page while YouTube Music can't be reached. */
+@Composable
+fun OfflineStrip(app: AppState) {
+    val colors = MaterialTheme.colorScheme
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().background(colors.surfaceContainerHighest).padding(horizontal = Spacing.L, vertical = Spacing.S),
+    ) {
+        Text("You're offline. Downloaded songs still play.", style = MaterialTheme.typography.bodyMedium, color = colors.onSurface, modifier = Modifier.weight(1f))
+        Text(
+            "Downloads",
+            style = MaterialTheme.typography.labelLarge,
+            color = colors.primary,
+            modifier = Modifier.clip(ErShape.Pill).clickable { app.go(Route.Downloads) }.handCursor().padding(horizontal = Spacing.M, vertical = Spacing.XS),
+        )
+    }
+}
+
 @Composable
 fun Message(text: String, modifier: Modifier = Modifier) {
     Box(modifier.fillMaxSize().padding(Spacing.XXL), contentAlignment = Alignment.Center) {

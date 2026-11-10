@@ -53,6 +53,9 @@ object Settings {
     val theme = Pref("theme", "dark") { it }
     val openNowPlaying = Pref("open_now_playing", true, String::toBoolean)
     val mono = Pref("mono", false, String::toBoolean)
+
+    /** Megabytes of songs kept to play again at once (and offline); downloads don't count. */
+    val songCacheMb = Pref("song_cache_mb", 1024, String::toInt)
     val eqEnabled = Pref("eq_enabled", false, String::toBoolean)
     val eqGains = Pref("eq_gains", "0,0,0,0,0,0,0,0,0,0") { it }
 }

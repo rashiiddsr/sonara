@@ -5,6 +5,8 @@
 
 package com.metrolist.music.ui.screens
 
+import com.metrolist.music.ui.theme.rememberWindowLayout
+import com.metrolist.music.ui.theme.WindowLayout
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.layout.Arrangement
@@ -86,6 +88,7 @@ fun HomeScreen(
     val homePage by viewModel.homePage.collectAsStateWithLifecycle()
     val quickPicks by viewModel.quickPicks.collectAsStateWithLifecycle()
     val keepListening by viewModel.keepListening.collectAsStateWithLifecycle()
+    val wide = rememberWindowLayout().wide
     val speedDial by viewModel.speedDialItems.collectAsStateWithLifecycle()
     val pinnedIds by viewModel.pinnedSpeedDialItems.collectAsStateWithLifecycle()
     val accountPlaylists by viewModel.accountPlaylists.collectAsStateWithLifecycle()
@@ -171,7 +174,7 @@ fun HomeScreen(
             speedDial.takeIf { it.isNotEmpty() }?.let { tiles ->
                 item(key = "speed_dial", contentType = CONTENT_TYPE_CAROUSEL) {
                     val pinned = remember(pinnedIds) { pinnedIds.map { it.id }.toSet() }
-                    val tile = Size.CardThumbSmall - Spacing.S
+                    val tile = if (wide) WindowLayout.TabletTile else Size.CardThumbSmall - Spacing.S
                     SectionHeader(title = stringResource(R.string.speed_dial))
                     LazyHorizontalGrid(
                         rows = GridCells.Fixed(SPEED_DIAL_ROWS),

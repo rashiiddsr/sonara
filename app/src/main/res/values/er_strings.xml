@@ -206,4 +206,12 @@
     <string name="er_now_playing_fullscreen">Now playing, full screen</string>
     <string name="er_lyrics_exit_fullscreen">Exit full screen</string>
     <string name="er_up_next_in">Up next in %1$ds</string>
+    <string name="er_browse">Browse</string>
+    <string name="er_no_artists_title">No artists yet</string>
+    <string name="er_no_artists_message">Artists you subscribe to on YouTube Music show up here.</string>
+    <string name="er_no_podcasts_message">Shows you save show up here, under your episodes.</string>
+    <string name="er_voice_unavailable">Voice search needs a speech service on this device, such as the Google app.</string>
+    <string name="er_type_song">Song</string>
+    <string name="er_shared_from">Shared from Sonara</string>
+    <string name="er_share_listen">Listen on</string>
 </resources>

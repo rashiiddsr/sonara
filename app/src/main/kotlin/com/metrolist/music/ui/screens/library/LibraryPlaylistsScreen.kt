@@ -5,11 +5,15 @@
 
 package com.metrolist.music.ui.screens.library
 
+import com.metrolist.music.ui.component.LibraryArtistGridItem
+import com.metrolist.music.ui.component.LibraryArtistListItem
+import com.metrolist.music.db.entities.Artist
 import com.metrolist.music.ui.component.NewItemSheet
 import androidx.media3.exoplayer.offline.Download
 import com.metrolist.music.LocalDownloadUtil
 import com.metrolist.music.LocalDatabase
 import com.metrolist.music.constants.CONTENT_TYPE_ALBUM
+import com.metrolist.music.constants.CONTENT_TYPE_ARTIST
 import com.metrolist.music.ui.component.LibraryAlbumGridItem
 import com.metrolist.music.ui.component.LibraryAlbumListItem
 import com.metrolist.music.db.entities.Album
@@ -118,6 +122,7 @@ fun LibraryPlaylistsScreen(
     initialTextFieldValue: String? = null,
     allowSyncing: Boolean = true,
     albums: List<Album> = emptyList(),
+    artists: List<Artist> = emptyList(),
 ) {
     val menuState = LocalMenuState.current
     val haptic = LocalHapticFeedback.current
@@ -297,10 +302,14 @@ fun LibraryPlaylistsScreen(
         }
     }
 
-    // "All" in the Library tab: the saved albums follow the playlists.
+    // "All" in the Library tab: the saved albums and the subscribed artists follow the playlists.
     val visibleAlbums = remember(albums, normalizedQuery) {
         if (normalizedQuery.isBlank()) albums
         else albums.filter { matchesNormalizedQuery(normalizedQuery, it.album.title) }
+    }
+    val visibleArtists = remember(artists, normalizedQuery) {
+        if (normalizedQuery.isBlank()) artists
+        else artists.filter { matchesNormalizedQuery(normalizedQuery, it.artist.name) }
     }
 
     val lazyListState = rememberLazyListState()
@@ -462,7 +471,7 @@ fun LibraryPlaylistsScreen(
                         headerContent()
                     }
 
-                    if (searchQuery.isNotBlank() && visibleResults.isEmpty() && visibleAlbums.isEmpty()) {
+                    if (searchQuery.isNotBlank() && visibleResults.isEmpty() && visibleAlbums.isEmpty() && visibleArtists.isEmpty()) {
                         item(key = "empty_placeholder") {
                             if (searchQuery.isNotBlank()) {
                                 LibrarySearchEmptyPlaceholder(modifier = Modifier.animateItem())
@@ -514,6 +523,19 @@ fun LibraryPlaylistsScreen(
                             modifier = Modifier.animateItem(),
                         )
                     }
+
+                    items(
+                        items = visibleArtists,
+                        key = { "artist_${it.id}" },
+                        contentType = { CONTENT_TYPE_ARTIST },
+                    ) { artist ->
+                        LibraryArtistListItem(
+                            menuState = menuState,
+                            coroutineScope = coroutineScope,
+                            artist = artist,
+                            modifier = Modifier.animateItem(),
+                        )
+                    }
                 }
             }
 
@@ -542,7 +564,7 @@ fun LibraryPlaylistsScreen(
                         headerContent()
                     }
 
-                    if (searchQuery.isNotBlank() && visibleResults.isEmpty() && visibleAlbums.isEmpty()) {
+                    if (searchQuery.isNotBlank() && visibleResults.isEmpty() && visibleAlbums.isEmpty() && visibleArtists.isEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             if (searchQuery.isNotBlank()) {
                                 LibrarySearchEmptyPlaceholder(modifier = Modifier.animateItem())
@@ -595,6 +617,19 @@ fun LibraryPlaylistsScreen(
                             menuState = menuState,
                             coroutineScope = coroutineScope,
                             album = album,
+                            modifier = Modifier.animateItem(),
+                        )
+                    }
+
+                    items(
+                        items = visibleArtists,
+                        key = { "artist_${it.id}" },
+                        contentType = { CONTENT_TYPE_ARTIST },
+                    ) { artist ->
+                        LibraryArtistGridItem(
+                            menuState = menuState,
+                            coroutineScope = coroutineScope,
+                            artist = artist,
                             modifier = Modifier.animateItem(),
                         )
                     }

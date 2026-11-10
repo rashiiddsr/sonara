@@ -265,7 +265,11 @@ fun PlayerBar(app: AppState, state: PlayerState) {
                     Column(Modifier.weight(1f, fill = false)) {
                         Text(track.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         CreditsText(track.allCredits, app, MaterialTheme.typography.bodySmall, colors.onSurfaceVariant)
-                        state.error?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = colors.error, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                        if (state.offline) {
+                            Text(OFFLINE_SONG, style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        } else {
+                            state.error?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = colors.error, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                        }
                     }
                     Spacer(Modifier.width(Spacing.XS))
                     val liked = track.id in app.likedIds
@@ -407,7 +411,9 @@ private fun LyricRow(line: LyricLine, translation: String?, distance: Int, synce
         },
         tween(LINE_FADE_MS),
     )
-    val scale by animateFloatAsState(if (active && synced) ACTIVE_LINE_SCALE else 1f, tween(LINE_FADE_MS, easing = FastOutSlowInEasing))
+    // As on the phone: the other lines shrink a little and the sung line keeps its full size, so
+    // it never grows past the edges of the pane.
+    val scale by animateFloatAsState(if (active || !synced) 1f else OTHER_LINE_SCALE, tween(LINE_FADE_MS, easing = FastOutSlowInEasing))
     val size = if (large) LARGE_LYRIC else NORMAL_LYRIC
     val align = if (centered) TextAlign.Center else TextAlign.Start
     val style = TextStyle(fontFamily = MaterialTheme.typography.headlineMedium.fontFamily, fontWeight = FontWeight.ExtraBold, fontSize = size, lineHeight = size * LYRIC_LINE_HEIGHT, textAlign = align)
@@ -475,20 +481,36 @@ private fun FoundLyrics(lyrics: Lyrics, player: Player, track: Track, modifier: 
         if (translateOn) value = LyricsTranslator.translate(track.id, lyrics.lines.map { it.text }, language)
     }
     val list = rememberLazyListState()
+    // Scrolling by hand (wheel or touchpad) holds the lyrics where they are; left alone for a
+    // moment, they glide back to the line being sung, as on the phone, even between lines.
     var lastScrollAt by remember { mutableLongStateOf(0L) }
+    var held by remember { mutableStateOf(false) }
+    var placed by remember(lyrics) { mutableStateOf(false) }
     val active by remember(lyrics) { derivedStateOf { if (lyrics.synced) lyrics.lines.indexOfLast { it.timeMs <= position.value } else -1 } }
 
-    BoxWithConstraints(modifier.onPointerEvent(PointerEventType.Scroll) { lastScrollAt = System.currentTimeMillis() }) {
+    BoxWithConstraints(
+        modifier.onPointerEvent(PointerEventType.Scroll) {
+            lastScrollAt = System.currentTimeMillis()
+            held = true
+        },
+    ) {
         val anchor = constraints.maxHeight / ANCHOR_DIVISOR
-        LaunchedEffect(active, lyrics) {
-            if (active < 0 || System.currentTimeMillis() - lastScrollAt < HOLD_AFTER_SCROLL_MS) return@LaunchedEffect
+        LaunchedEffect(lastScrollAt) {
+            if (!held) return@LaunchedEffect
+            delay(RESYNC_AFTER_MS)
+            held = false
+        }
+        LaunchedEffect(active, held, lyrics) {
+            if (active < 0 || held) return@LaunchedEffect
             val target = active + 1
             val shown = list.layoutInfo.visibleItemsInfo.firstOrNull { it.index == target }
-            if (shown != null) {
-                list.animateScrollBy((shown.offset - anchor).toFloat(), tween(LINE_SCROLL_MS, easing = FastOutSlowInEasing))
-            } else {
-                list.scrollToItem(target, -anchor)
+            when {
+                // Opening the lyrics mid-song: straight to the line, nothing to glide from.
+                !placed -> list.scrollToItem(target, -anchor)
+                shown != null -> list.animateScrollBy((shown.offset - anchor).toFloat(), tween(LINE_SCROLL_MS, easing = FastOutSlowInEasing))
+                else -> list.animateScrollToItem(target, -anchor)
             }
+            placed = true
         }
         LazyColumn(
             state = list,
@@ -802,7 +824,7 @@ private const val NEAR_LINE_ALPHA = 0.5f
 private const val MIDDLE_LINE_ALPHA = 0.32f
 private const val FAR_LINE_ALPHA = 0.18f
 private const val LINE_FADE_MS = 420
-private const val ACTIVE_LINE_SCALE = 1.05f
+private const val OTHER_LINE_SCALE = 0.97f
 private val NORMAL_LYRIC = 30.sp
 private val LARGE_LYRIC = 42.sp
 private const val LYRIC_LINE_HEIGHT = 1.28f
@@ -812,7 +834,7 @@ private const val DOT_MIN_ALPHA = 0.3f
 private const val DOT_BREATH_MS = 700
 private const val DOTS = 3
 private const val ANCHOR_DIVISOR = 3
-private const val HOLD_AFTER_SCROLL_MS = 3_000L
+private const val RESYNC_AFTER_MS = 2_500L
 private const val LINE_SCROLL_MS = 620
 private const val LYRIC_SKELETON_LINES = 6
 private const val LYRIC_SKELETON_WIDTH = 0.8f

@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.player
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.widthIn
@@ -67,7 +68,12 @@ fun MiniPlayer(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
     val canSkipNext by playerConnection.canSkipNext.collectAsStateWithLifecycle()
+    val canSkipPrevious by playerConnection.canSkipPrevious.collectAsStateWithLifecycle()
+    val currentSong by playerConnection.currentSong.collectAsStateWithLifecycle(initialValue = null)
     val metadata = mediaMetadata ?: return
+    // A tablet gets the desktop's player bar: the song on the left, the controls in the middle,
+    // like on the right, as wide as the pages.
+    val wide = rememberWindowLayout().wide
     val context = LocalContext.current
     val thumbPx = with(LocalDensity.current) { Size.MiniPlayerThumb.roundToPx() }
     // Tinted with the cover's colour, like the full player's glow: a pastel of it on Sonar Day,
@@ -83,7 +89,7 @@ fun MiniPlayer(
             .testTag("mini_player_card")
             .fillMaxWidth()
             .wrapContentWidth(Alignment.CenterHorizontally)
-            .widthIn(max = if (rememberWindowLayout().tabletLandscape) WindowLayout.MiniPlayerMaxWidth else Dp.Infinity)
+            .widthIn(max = if (wide) WindowLayout.ContentMaxWidth else Dp.Infinity)
             .fillMaxWidth()
             .height(Size.MiniPlayer)
             .padding(horizontal = Spacing.S)
@@ -128,6 +134,15 @@ fun MiniPlayer(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+            if (wide) {
+                IconButton(onClick = playerConnection::seekToPrevious, enabled = canSkipPrevious) {
+                    Icon(
+                        painter = painterResource(R.drawable.skip_previous),
+                        contentDescription = stringResource(R.string.er_previous),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
             IconButton(onClick = playerConnection::togglePlayPause) {
                 Icon(
                     painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
@@ -141,6 +156,19 @@ fun MiniPlayer(
                     contentDescription = stringResource(R.string.er_next),
                     tint = MaterialTheme.colorScheme.onSurface,
                 )
+            }
+            if (wide) {
+                // The controls sit in the middle: the like button balances the song's side.
+                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.End) {
+                    val liked = currentSong?.song?.liked ?: metadata.liked
+                    IconButton(onClick = playerConnection::toggleLike) {
+                        Icon(
+                            painter = painterResource(if (liked) R.drawable.favorite else R.drawable.favorite_border),
+                            contentDescription = stringResource(R.string.er_like),
+                            tint = if (liked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                }
             }
         }
         ProgressLine(

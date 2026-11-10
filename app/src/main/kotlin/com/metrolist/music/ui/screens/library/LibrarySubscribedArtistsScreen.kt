@@ -5,6 +5,13 @@
 
 package com.metrolist.music.ui.screens.library
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import com.metrolist.music.ui.screens.Screens
+import com.metrolist.music.ui.component.LoadingState
+import com.metrolist.music.ui.component.EmptyState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.asPaddingValues
@@ -51,13 +58,33 @@ fun LibrarySubscribedArtistsScreen(
         }
     }.collectAsStateWithLifecycle(initialValue = emptyList())
 
-    LaunchedEffect(Unit) { syncUtils.syncArtistsSubscriptions() }
+    // Read from YouTube each time the tab opens; until then an empty list may only mean "not yet".
+    var reading by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        runCatching { withContext(Dispatchers.IO) { syncUtils.syncArtistsSubscriptionsSuspend() } }
+        reading = false
+    }
 
     LazyColumn(
         contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
         modifier = Modifier.fillMaxSize(),
     ) {
         item(key = "header", contentType = CONTENT_TYPE_HEADER) { header() }
+        if (artists.isEmpty()) {
+            item(key = "empty", contentType = CONTENT_TYPE_EMPTY) {
+                if (reading) {
+                    LoadingState(rows = 6)
+                } else {
+                    EmptyState(
+                        icon = R.drawable.artist,
+                        title = stringResource(R.string.er_no_artists_title),
+                        message = stringResource(R.string.er_no_artists_message),
+                        actionLabel = stringResource(R.string.er_browse),
+                        onAction = { navController.navigate(Screens.Search.route) },
+                    )
+                }
+            }
+        }
         items(artists, key = { it.id }, contentType = { CONTENT_TYPE_ARTIST }) { artist ->
             ListItem(
                 title = artist.artist.name,
@@ -81,3 +108,4 @@ fun LibrarySubscribedArtistsScreen(
 
 private const val CONTENT_TYPE_HEADER = "header"
 private const val CONTENT_TYPE_ARTIST = "artist"
+private const val CONTENT_TYPE_EMPTY = "empty"

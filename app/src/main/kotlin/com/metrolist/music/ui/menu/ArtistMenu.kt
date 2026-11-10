@@ -5,6 +5,8 @@
 
 package com.metrolist.music.ui.menu
 
+import com.metrolist.music.utils.ShareItem
+import com.metrolist.music.utils.ShareCard
 import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.PaddingValues
@@ -196,15 +198,17 @@ fun ArtistMenu(
                                 text = stringResource(R.string.share),
                                 onClick = {
                                     onDismiss()
-                                val intent = Intent().apply {
-                                        action = Intent.ACTION_SEND
-                                        type = "text/plain"
-                                        putExtra(
-                                            Intent.EXTRA_TEXT,
-                                            "https://music.youtube.com/channel/${artist.id}"
-                                        )
-                                    }
-                                    context.startActivity(Intent.createChooser(intent, null))
+                                    ShareCard.share(
+                                        context,
+                                        ShareItem(
+                                            kind = context.getString(R.string.er_type_artist),
+                                            title = artist.artist.name,
+                                            subtitle = null,
+                                            coverUrl = artist.artist.thumbnailUrl,
+                                            link = "https://music.youtube.com/channel/${artist.id}",
+                                            round = true,
+                                        ),
+                                    )
                                 }
                             )
                         )

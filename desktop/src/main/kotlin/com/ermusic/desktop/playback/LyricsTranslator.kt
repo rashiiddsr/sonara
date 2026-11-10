@@ -10,6 +10,11 @@
 
 package com.ermusic.desktop.playback
 
+import com.ermusic.desktop.data.keepNewest
+import com.ermusic.desktop.data.KEEP_FILES
+import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.Mutex
 import com.ermusic.desktop.AppFiles
 import com.ermusic.desktop.BuildSecrets
 import kotlinx.coroutines.Dispatchers
@@ -73,12 +78,24 @@ object LyricsTranslator {
         withContext(Dispatchers.IO) {
             if (BuildSecrets.AI_KEY.isBlank()) return@withContext emptyMap()
             val file = File(dir, "$trackId.$target.$MODE.tsv")
-            if (file.exists()) return@withContext decode(file.readText())
-            val sources = lines.map { it.trim() }.filter { it.isNotEmpty() && !isVocalsOnly(it) }.distinct()
-            val found = sources.takeIf { it.isNotEmpty() }?.let { batch -> firstAnswer(batch, target) } ?: return@withContext emptyMap()
-            file.writeText(found.entries.joinToString("\n") { (source, text) -> "${source.replace('\t', ' ')}$PAIR${text.replace('\t', ' ')}" })
-            found
+            // The player readies the translation when the song starts; the lyrics page, opened
+            // meanwhile, waits for that answer instead of asking again.
+            asking.computeIfAbsent(file.name) { Mutex() }.withLock {
+                if (file.exists()) {
+                    file.setLastModified(System.currentTimeMillis())
+                    return@withLock decode(file.readText())
+                }
+                val sources = lines.map { it.trim() }.filter { it.isNotEmpty() && !isVocalsOnly(it) }.distinct()
+                val found = sources.takeIf { it.isNotEmpty() }?.let { batch -> firstAnswer(batch, target) } ?: return@withLock emptyMap()
+                file.writeText(found.entries.joinToString("\n") { (source, text) -> "${source.replace('\t', ' ')}$PAIR${text.replace('\t', ' ')}" })
+                found
+            }
         }
+
+    private val asking = ConcurrentHashMap<String, Mutex>()
+
+    /** Run at start, as the lyrics are. */
+    fun tidy() = keepNewest(dir, KEEP_FILES)
 
     private fun decode(stored: String): Map<String, String> =
         stored.lineSequence().mapNotNull { row ->

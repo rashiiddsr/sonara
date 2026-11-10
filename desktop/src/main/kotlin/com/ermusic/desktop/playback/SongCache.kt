@@ -5,6 +5,7 @@
 
 package com.ermusic.desktop.playback
 
+import com.ermusic.desktop.data.Settings
 import com.ermusic.desktop.AppFiles
 import com.ermusic.desktop.data.Downloads
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +31,10 @@ data class LocalSong(val file: File, val loudnessDb: Double?)
  */
 object SongCache {
     private const val CHUNK_BYTES = 1_048_576L
-    private const val MAX_CACHE_BYTES = 1_073_741_824L
+    private const val BYTES_PER_MB = 1_048_576L
+
+    /** The sizes offered in Settings, in megabytes. */
+    val sizes = listOf(512, 1024, 2048, 5120)
     private const val PARTIAL_CONTENT = 206
 
     private val dir = File(AppFiles.root, "songs").apply { mkdirs() }
@@ -38,6 +42,11 @@ object SongCache {
     private val locks = ConcurrentHashMap<String, Mutex>()
 
     private fun loudnessFile(videoId: String) = File(dir, "$videoId.loud")
+
+    private val maxBytes: Long get() = Settings.songCacheMb.value * BYTES_PER_MB
+
+    /** Whether the song is on the computer already (downloaded or fetched before), so it plays offline. */
+    fun isStored(videoId: String): Boolean = Downloads.fileFor(videoId).exists() || File(dir, "$videoId.audio").exists()
 
     private fun stored(file: File, videoId: String): LocalSong =
         LocalSong(file, runCatching { loudnessFile(videoId).readText().toDouble() }.getOrNull())
@@ -69,6 +78,17 @@ object SongCache {
 
     fun sizeBytes(): Long = dir.listFiles().orEmpty().sumOf(File::length)
 
+    /**
+     * Run at start: songs left half-fetched when the app last closed, loudness notes of songs no
+     * longer kept, and whatever is over the limit (it may have been lowered) go.
+     */
+    fun tidy() {
+        val files = dir.listFiles().orEmpty()
+        files.filter { it.extension == "part" }.forEach(File::delete)
+        files.filter { it.extension == "loud" && !File(dir, it.nameWithoutExtension + ".audio").exists() }.forEach(File::delete)
+        trim(keep = null)
+    }
+
     private suspend fun download(stream: ResolvedStream, target: File) {
         RandomAccessFile(target, "rw").use { out ->
             var offset = 0L
@@ -97,13 +117,14 @@ object SongCache {
         }
     }
 
-    private fun trim(keep: File) {
+    /** The songs played longest ago go first; [keep], the one just fetched, stays. */
+    fun trim(keep: File? = null) {
         val files = dir.listFiles { file -> file.extension == "audio" && file != keep }.orEmpty().sortedBy(File::lastModified)
-        var size = files.sumOf(File::length) + keep.length()
+        var size = files.sumOf(File::length) + (keep?.length() ?: 0)
         for (file in files) {
-            if (size <= MAX_CACHE_BYTES) break
+            if (size <= maxBytes) break
             size -= file.length()
-            file.delete()
+            if (file.delete()) loudnessFile(file.nameWithoutExtension).delete()
         }
     }
 }

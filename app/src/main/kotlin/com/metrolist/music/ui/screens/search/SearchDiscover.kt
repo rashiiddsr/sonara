@@ -5,6 +5,8 @@
 
 package com.metrolist.music.ui.screens.search
 
+import com.metrolist.music.ui.theme.rememberWindowLayout
+import com.metrolist.music.ui.theme.WindowLayout
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.lerp
@@ -91,8 +93,10 @@ fun SearchDiscover(
     val actions = rememberItemActions()
     val insets = LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
 
+    // Larger cards on a tablet: a phone's size would line up too many of them, too small.
+    val cardMin = if (rememberWindowLayout().wide) WindowLayout.TabletGridCard else Size.CardThumb + Spacing.L
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(Size.CardThumb + Spacing.L),
+        columns = GridCells.Adaptive(cardMin),
         horizontalArrangement = Arrangement.spacedBy(Spacing.S),
         verticalArrangement = Arrangement.spacedBy(Spacing.S),
         contentPadding = insets.asPaddingValues(),
@@ -104,7 +108,7 @@ fun SearchDiscover(
     ) {
         item(key = "title", span = { GridItemSpan(maxLineSpan) }, contentType = "title") {
             Text(
-                text = stringResource(R.string.search),
+                text = stringResource(R.string.er_browse),
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.padding(top = Spacing.L, bottom = Spacing.M),
             )

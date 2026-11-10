@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.screens.library
 
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
@@ -45,10 +46,12 @@ fun LibraryScreen() {
     val navController = LocalNavController.current
     val database = LocalDatabase.current
     var playlistViewType by rememberEnumPreference(PlaylistViewTypeKey, LibraryViewType.GRID)
-    // 1 = Playlists (default), 2 = Albums, 5 = Artists (subscriptions), 3 = Podcasts,
-    // 4 = On device (files on the phone). Shown in YouTube Music's order.
-    var tab by rememberSaveable { mutableIntStateOf(1) }
+    // 0 = All (default: playlists, albums and artists; podcasts and files on the phone keep
+    // their own tabs), 1 = Playlists, 2 = Albums, 5 = Artists (subscriptions), 3 = Podcasts,
+    // 4 = On device. Shown in YouTube Music's order.
+    var tab by rememberSaveable { mutableIntStateOf(TAB_ALL) }
     val chips = listOf(
+        TAB_ALL to stringResource(R.string.filter_all),
         1 to stringResource(R.string.filter_playlists),
         2 to stringResource(R.string.filter_albums),
         5 to stringResource(R.string.filter_artists),
@@ -56,6 +59,15 @@ fun LibraryScreen() {
         4 to stringResource(R.string.er_library_device),
     )
     val header = @Composable { ChipsRow(chips = chips, currentValue = tab, onValueUpdate = { tab = it }) }
+    // What "All" adds after the playlists: saved albums and subscribed artists, newest first.
+    val savedAlbums by remember(database) {
+        database.albumsLikedByCreateDateAsc().map { list -> list.filterNot { it.album.isLocal }.reversed() }
+    }.collectAsStateWithLifecycle(initialValue = emptyList())
+    val subscribedArtists by remember(database) {
+        database.artistsBookmarkedByCreateDateAsc().map { list ->
+            list.filterNot { it.artist.isPodcastChannel || it.artist.isLocal }.reversed()
+        }
+    }.collectAsStateWithLifecycle(initialValue = emptyList())
     // Pull to refresh: the account's playlists and saved albums from YouTube.
     val syncUtils = LocalSyncUtils.current
     val scope = rememberCoroutineScope()
@@ -81,7 +93,7 @@ fun LibraryScreen() {
         },
     ) {
         if (tab == 2) {
-            LibraryAlbumsScreen(navController, onDeselect = { tab = 1 }, header = header)
+            LibraryAlbumsScreen(navController, onDeselect = { tab = TAB_ALL }, header = header)
         } else if (tab == 5) {
             LibrarySubscribedArtistsScreen(navController, header = header)
         } else if (tab == 3) {
@@ -89,12 +101,17 @@ fun LibraryScreen() {
         } else if (tab == 4) {
             LibraryDeviceScreen(header = header)
         } else {
+            val all = tab == TAB_ALL
             LibraryPlaylistsScreen(
                 navController = navController,
                 filterContent = header,
                 viewType = playlistViewType,
                 onViewTypeChange = { playlistViewType = it },
+                albums = if (all) savedAlbums else emptyList(),
+                artists = if (all) subscribedArtists else emptyList(),
             )
         }
     }
 }
+
+private const val TAB_ALL = 0

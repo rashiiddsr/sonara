@@ -5,6 +5,8 @@
 
 package com.metrolist.music.ui.menu
 
+import com.metrolist.music.utils.ShareItem
+import com.metrolist.music.utils.ShareCard
 import com.metrolist.music.ui.component.ErToast
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -348,13 +350,16 @@ fun AlbumMenu(
                             text = stringResource(R.string.share),
                             onClick = {
                                 onDismiss()
-                                val intent =
-                                    Intent().apply {
-                                        action = Intent.ACTION_SEND
-                                        type = "text/plain"
-                                        putExtra(Intent.EXTRA_TEXT, "https://music.youtube.com/playlist?list=${album.album.playlistId}")
-                                    }
-                                context.startActivity(Intent.createChooser(intent, null))
+                                ShareCard.share(
+                                    context,
+                                    ShareItem(
+                                        kind = context.getString(R.string.er_type_album),
+                                        title = album.album.title,
+                                        subtitle = album.artists.joinToString { it.name },
+                                        coverUrl = album.album.thumbnailUrl,
+                                        link = "https://music.youtube.com/playlist?list=${album.album.playlistId}",
+                                    ),
+                                )
                             },
                         ),
                     ),

@@ -82,7 +82,7 @@ fun VoiceSearchSheet(
     ListeningEffects(onLeave = onDismiss)
 
     DisposableEffect(attempt) {
-        val recognizer = SpeechRecognizer.createSpeechRecognizer(context)
+        val recognizer = createRecognizer(context)
         recognizer.setRecognitionListener(
             object : RecognitionListener {
                 override fun onReadyForSpeech(params: Bundle?) {
@@ -221,3 +221,18 @@ internal fun PulseButton(
         }
     }
 }
+
+/** A speech service to search by voice: the system's (usually Google's), or Android's own on-device one. */
+fun speechRecognitionAvailable(context: android.content.Context): Boolean =
+    SpeechRecognizer.isRecognitionAvailable(context) ||
+        (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S && SpeechRecognizer.isOnDeviceRecognitionAvailable(context))
+
+private fun createRecognizer(context: android.content.Context): SpeechRecognizer =
+    if (!SpeechRecognizer.isRecognitionAvailable(context) &&
+        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S &&
+        SpeechRecognizer.isOnDeviceRecognitionAvailable(context)
+    ) {
+        SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
+    } else {
+        SpeechRecognizer.createSpeechRecognizer(context)
+    }

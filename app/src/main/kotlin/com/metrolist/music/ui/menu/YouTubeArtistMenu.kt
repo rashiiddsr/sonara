@@ -5,6 +5,10 @@
 
 package com.metrolist.music.ui.menu
 
+import com.metrolist.music.utils.ShareItem
+import com.metrolist.music.utils.ShareCard
+import com.metrolist.music.LocalNavController
+import com.metrolist.music.ui.screens.playlist.artistRadioRoute
 import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.PaddingValues
@@ -55,6 +59,7 @@ fun YouTubeArtistMenu(
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
+    val navController = LocalNavController.current
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val libraryArtist by database.artist(artist.id).collectAsStateWithLifecycle(initialValue = null)
@@ -97,7 +102,7 @@ fun YouTubeArtistMenu(
                                 },
                                 text = stringResource(R.string.start_radio),
                                 onClick = {
-                                    playerConnection.playQueue(YouTubeQueue(watchEndpoint))
+                                    navController.navigate(artistRadioRoute(watchEndpoint, artist.title, artist.thumbnail))
                                     onDismiss()
                                 }
                             )
@@ -140,12 +145,17 @@ fun YouTubeArtistMenu(
                             },
                             text = stringResource(R.string.share),
                             onClick = {
-                                val intent = Intent().apply {
-                                    action = Intent.ACTION_SEND
-                                    type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, artist.shareLink)
-                                }
-                                context.startActivity(Intent.createChooser(intent, null))
+                                ShareCard.share(
+                                    context,
+                                    ShareItem(
+                                        kind = context.getString(R.string.er_type_artist),
+                                        title = artist.title,
+                                        subtitle = null,
+                                        coverUrl = artist.thumbnail,
+                                        link = artist.shareLink,
+                                        round = true,
+                                    ),
+                                )
                                 onDismiss()
                             }
                         )

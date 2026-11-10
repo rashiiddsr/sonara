@@ -5,6 +5,9 @@
 
 package com.metrolist.music.ui.menu
 
+import com.metrolist.music.utils.ShareItem
+import com.metrolist.music.utils.ShareCard
+import com.metrolist.music.ui.screens.playlist.songRadioRoute
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -332,12 +335,16 @@ fun YouTubeSongMenu(
                         },
                         text = stringResource(R.string.share),
                         onClick = {
-                            val intent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, song.shareLink)
-                            }
-                            context.startActivity(Intent.createChooser(intent, null))
+                            ShareCard.share(
+                                context,
+                                ShareItem(
+                                    kind = context.getString(R.string.er_type_song),
+                                    title = song.title,
+                                    subtitle = song.artists.joinToString { it.name },
+                                    coverUrl = song.thumbnail,
+                                    link = song.shareLink,
+                                ),
+                            )
                             onDismiss()
                         }
                     )
@@ -360,7 +367,7 @@ fun YouTubeSongMenu(
                             )
                         },
                         onClick = {
-                            playerConnection.playQueue(YouTubeQueue.radio(song.toMediaMetadata()))
+                            navController.navigate(songRadioRoute(song.toMediaMetadata()))
                             onDismiss()
                         }
                     ),

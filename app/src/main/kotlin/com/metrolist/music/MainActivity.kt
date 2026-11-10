@@ -5,6 +5,9 @@
 
 package com.metrolist.music
 
+import com.metrolist.music.ui.screens.search.SearchState
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.widthIn
 import com.metrolist.music.ui.theme.rememberWindowLayout
@@ -466,7 +469,9 @@ class MainActivity : FragmentActivity() {
             setSystemBarAppearance(useDarkTheme)
         }
 
-        val enableLandscapeScaling by rememberPreference(EnableLandscapeScalingKey, defaultValue = false)
+        // On by default: without it a big tablet shows phone-sized cards and text, far too many
+        // and too small for the screen.
+        val enableLandscapeScaling by rememberPreference(EnableLandscapeScalingKey, defaultValue = true)
         val userDensityScale by rememberPreference(DensityScaleKey, defaultValue = 1f)
         val pureBlack = false
 
@@ -489,11 +494,13 @@ class MainActivity : FragmentActivity() {
 
             val landscapeDensityScale =
                 remember(smallestDimensionDp, enableLandscapeScaling) {
+                    // Steps that keep a tablet a tablet: scaled, its shorter side still counts as
+                    // tablet width (840 / 1.3 and 720 / 1.2 stay at 600 or more). A small tablet,
+                    // already close to that line, keeps its size.
                     if (enableLandscapeScaling) {
                         when {
-                            smallestDimensionDp >= 840.dp -> 1.15f
-                            smallestDimensionDp >= 720.dp -> 1.1f
-                            smallestDimensionDp >= 600.dp -> 1.05f
+                            smallestDimensionDp >= 840.dp -> 1.3f
+                            smallestDimensionDp >= 720.dp -> 1.2f
                             else -> 1.0f
                         }
                     } else {
@@ -611,12 +618,19 @@ class MainActivity : FragmentActivity() {
 
                 val isLandscape = configuration.containerDpSize.width > configuration.containerDpSize.height
 
-                // The rail only in landscape; a tablet held upright keeps the bottom bar, like a phone.
-                val showRail = !forceBottomNav && isLandscape && !inSearchScreen
-
                 // On wide screens pages stop growing at ContentMaxWidth and sit in the middle; the
                 // top bar takes the same margins so its title lines up with the page under it.
                 val windowLayout = rememberWindowLayout()
+
+                // A tablet, upright or not, and a phone turned sideways navigate with the rail,
+                // never with the bottom bar. The rail shows on Home, Browse and Library only: an
+                // inner page (settings, a playlist, a radio, search results) and typing a search
+                // get the whole width, with their own way back.
+                val useRail = !forceBottomNav && (isLandscape || windowLayout.wide)
+                val onMainPage =
+                    (currentRoute == null || currentRoute in navigationItemRoutes) &&
+                        !(currentRoute == Screens.Search.route && SearchState.typing)
+                val showRail = useRail && onMainPage
                 val railWidth = if (showRail) WindowLayout.RailWidth else 0.dp
                 val contentMaxWidth = if (windowLayout.tabletLandscape) WindowLayout.ContentMaxWidth else Dp.Infinity
                 val contentMargin =
@@ -627,14 +641,14 @@ class MainActivity : FragmentActivity() {
                     }
 
                 val navPadding =
-                    if (shouldShowNavigationBar && !showRail) {
+                    if (shouldShowNavigationBar && !useRail) {
                         NavigationBarHeight
                     } else {
                         0.dp
                     }
 
                 val navigationBarHeight by animateDpAsState(
-                    targetValue = if (shouldShowNavigationBar && !showRail) NavigationBarHeight else 0.dp,
+                    targetValue = if (shouldShowNavigationBar && !useRail) NavigationBarHeight else 0.dp,
                     animationSpec = NavigationBarAnimationSpec,
                     label = "navBarHeight",
                 )
@@ -644,7 +658,7 @@ class MainActivity : FragmentActivity() {
                         dismissedBound = 0.dp,
                         collapsedBound =
                             bottomInset +
-                                (if (!showRail && shouldShowNavigationBar) navPadding else 0.dp) +
+                                (if (!useRail && shouldShowNavigationBar) navPadding else 0.dp) +
                                 MiniPlayerBottomSpacing +
                                 MiniPlayerHeight,
                         expandedBound = maxHeight,
@@ -691,11 +705,11 @@ class MainActivity : FragmentActivity() {
                         bottomInset,
                         shouldShowNavigationBar,
                         playerBottomSheetState.isDismissed,
-                        showRail,
+                        useRail,
                         hidePlayer,
                     ) {
                         var bottom = bottomInset
-                        if (shouldShowNavigationBar && !showRail) {
+                        if (shouldShowNavigationBar && !useRail) {
                             bottom += NavigationBarHeight
                         }
                         if (!playerBottomSheetState.isDismissed && !hidePlayer) bottom += MiniPlayerHeight + MiniPlayerBottomSpacing
@@ -837,7 +851,7 @@ class MainActivity : FragmentActivity() {
                     remember(navBackStackEntry) {
                         when (navBackStackEntry?.destination?.route) {
                             Screens.Home.route -> R.string.home
-                            Screens.Search.route -> R.string.search
+                            Screens.Search.route -> R.string.er_browse
                             Screens.Library.route -> R.string.filter_library
                             else -> null
                         }
@@ -1006,7 +1020,7 @@ class MainActivity : FragmentActivity() {
                             // Pre-calculate values for graphicsLayer to avoid reading state during composition
                             val navBarTotalHeight = bottomInset + NavigationBarHeight
 
-                            if (!showRail) {
+                            if (!useRail) {
                                 Box {
                                     if (activePlayerConnection != null && !hidePlayer) {
                                         BottomSheetPlayer(

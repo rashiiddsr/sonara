@@ -5,6 +5,11 @@
 
 package com.metrolist.music.ui.menu
 
+import com.metrolist.music.utils.ShareItem
+import com.metrolist.music.utils.ShareCard
+import com.metrolist.innertube.models.WatchEndpoint
+import com.metrolist.music.LocalNavController
+import com.metrolist.music.ui.screens.playlist.radioRoute
 import com.metrolist.music.utils.deletePlaylistEverywhere
 import com.metrolist.music.ui.component.LocalSheetHost
 import com.metrolist.music.utils.appScope
@@ -93,6 +98,7 @@ fun PlaylistMenu(
     val database = LocalDatabase.current
     val downloadUtil = LocalDownloadUtil.current
     val playerConnection = LocalPlayerConnection.current ?: return
+    val navController = LocalNavController.current
     val dbPlaylist by database.playlist(playlist.id).collectAsStateWithLifecycle(initialValue = playlist)
     var songs by remember {
         mutableStateOf(emptyList<Song>())
@@ -368,16 +374,16 @@ fun PlaylistMenu(
                             text = stringResource(R.string.share),
                             onClick = {
                                 onDismiss()
-                                val intent =
-                                    Intent().apply {
-                                        action = Intent.ACTION_SEND
-                                        type = "text/plain"
-                                        putExtra(
-                                            Intent.EXTRA_TEXT,
-                                            "https://music.youtube.com/playlist?list=${browseId.removePrefix("VL")}",
-                                        )
-                                    }
-                                context.startActivity(Intent.createChooser(intent, null))
+                                ShareCard.share(
+                                    context,
+                                    ShareItem(
+                                        kind = context.getString(R.string.er_type_playlist),
+                                        title = playlist.playlist.name,
+                                        subtitle = context.resources.getQuantityString(R.plurals.n_song, playlist.songCount, playlist.songCount),
+                                        coverUrl = playlist.thumbnails.firstOrNull() ?: playlist.playlist.thumbnailUrl,
+                                        link = "https://music.youtube.com/playlist?list=${browseId.removePrefix("VL")}",
+                                    ),
+                                )
                             },
                         )
                         },
@@ -402,16 +408,15 @@ fun PlaylistMenu(
                                             contentDescription = null,
                                         )
                                     },
+                                    // Opens the radio as a page first; nothing plays until a pick.
                                     onClick = {
-                                        coroutineScope.launch(Dispatchers.IO) {
-                                            YouTube.playlist(browseId).getOrNull()?.playlist?.let { playlistItem ->
-                                                playlistItem.radioEndpoint?.let { radioEndpoint ->
-                                                    withContext(Dispatchers.Main) {
-                                                        playerConnection.playQueue(YouTubeQueue(radioEndpoint))
-                                                    }
-                                                }
-                                            }
-                                        }
+                                        navController.navigate(
+                                            radioRoute(
+                                                endpoint = WatchEndpoint(playlistId = "RDAMPL$browseId", params = playlist.playlist.radioEndpointParams),
+                                                name = playlist.playlist.name,
+                                                thumbnailUrl = playlist.thumbnails.firstOrNull() ?: playlist.playlist.thumbnailUrl,
+                                            ),
+                                        )
                                         onDismiss()
                                     },
                                 ),

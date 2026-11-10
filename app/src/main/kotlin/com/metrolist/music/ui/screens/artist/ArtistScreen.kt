@@ -7,7 +7,7 @@ package com.metrolist.music.ui.screens.artist
 
 import com.metrolist.music.ui.theme.topBarBackdrop
 import com.metrolist.music.ui.theme.backdropTopBarColors
-import com.metrolist.music.ui.screens.playlist.radioRoute
+import com.metrolist.music.ui.screens.playlist.artistRadioRoute
 import com.metrolist.music.ui.component.RefreshBox
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -408,9 +408,8 @@ fun ArtistScreen(
                                                     // instead of playing at once.
                                                     onClick = {
                                                         navController.navigate(
-                                                            radioRoute(
-                                                                playlistId = radioEndpoint.playlistId ?: return@OutlinedButton,
-                                                                params = radioEndpoint.params,
+                                                            artistRadioRoute(
+                                                                endpoint = radioEndpoint,
                                                                 artistName = artistPage?.artist?.title.orEmpty(),
                                                                 thumbnailUrl = artistPage?.artist?.thumbnail,
                                                             ),
@@ -1032,7 +1031,17 @@ fun ArtistScreen(
             IconButton(
                 onClick = {
                     viewModel.artistPage?.artist?.let { artist ->
-                        com.metrolist.music.ui.menu.shareLink(context, artist.title, artist.shareLink)
+                        com.metrolist.music.utils.ShareCard.share(
+                            context,
+                            com.metrolist.music.utils.ShareItem(
+                                kind = context.getString(R.string.er_type_artist),
+                                title = artist.title,
+                                subtitle = null,
+                                coverUrl = artist.thumbnail,
+                                link = artist.shareLink,
+                                round = true,
+                            ),
+                        )
                     }
                 },
             ) {

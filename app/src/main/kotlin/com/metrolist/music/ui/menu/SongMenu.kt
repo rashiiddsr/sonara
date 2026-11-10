@@ -5,6 +5,9 @@
 
 package com.metrolist.music.ui.menu
 
+import com.metrolist.music.utils.ShareItem
+import com.metrolist.music.utils.ShareCard
+import com.metrolist.music.ui.screens.playlist.songRadioRoute
 import com.metrolist.music.ui.component.ErToast
 import android.content.Intent
 import android.content.res.Configuration
@@ -535,13 +538,16 @@ fun SongMenu(
                             text = stringResource(R.string.share),
                             onClick = {
                                 onDismiss()
-                                val intent =
-                                    Intent().apply {
-                                        action = Intent.ACTION_SEND
-                                        type = "text/plain"
-                                        putExtra(Intent.EXTRA_TEXT, "https://music.youtube.com/watch?v=${song.id}")
-                                    }
-                                context.startActivity(Intent.createChooser(intent, null))
+                                ShareCard.share(
+                                    context,
+                                    ShareItem(
+                                        kind = context.getString(R.string.er_type_song),
+                                        title = song.song.title,
+                                        subtitle = song.orderedArtists.joinToString { it.name },
+                                        coverUrl = song.song.thumbnailUrl,
+                                        link = "https://music.youtube.com/watch?v=${song.id}",
+                                    ),
+                                )
                             },
                         ),
                     ),
@@ -564,7 +570,7 @@ fun SongMenu(
                             },
                             onClick = {
                                 onDismiss()
-                                playerConnection.playQueue(YouTubeQueue.radio(song.toMediaMetadata()))
+                                navController.navigate(songRadioRoute(song.toMediaMetadata()))
                             },
                         ),
                         Material3MenuItemData(

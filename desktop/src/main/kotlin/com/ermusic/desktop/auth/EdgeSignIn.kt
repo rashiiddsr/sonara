@@ -5,6 +5,7 @@
 
 package com.ermusic.desktop.auth
 
+import java.util.concurrent.TimeUnit
 import com.ermusic.desktop.AppFiles
 import com.ermusic.desktop.Os
 import com.sun.jna.platform.win32.Advapi32Util
@@ -47,6 +48,7 @@ object EdgeSignIn {
         "https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmusic.youtube.com"
     private const val MUSIC_URL = "https://music.youtube.com"
     private const val POLL_MS = 1_500L
+    private const val PROFILE_RELEASE_S = 5L
     private const val SIGN_IN_TIMEOUT_MS = 15 * 60 * 1000L
     private const val PAGE_DATA_SCRIPT =
         "JSON.stringify(window.yt&&yt.config_?{v:yt.config_.VISITOR_DATA,d:yt.config_.DATASYNC_ID," +
@@ -58,6 +60,32 @@ object EdgeSignIn {
     private fun snapProfile(name: String) = File(System.getProperty("user.home"), "snap/$name/common/sonara-signin")
     private val http = OkHttpClient()
     private val json = Json { ignoreUnknownKeys = true }
+
+    /**
+     * After signing in, the browser's own caches, models and components go (tens of megabytes it
+     * fetches again if it is ever needed). Its settings and cookies stay, so signing in again later
+     * remembers the account.
+     */
+    fun tidyProfile() {
+        if (signingIn) return
+        val profiles = listOf(profile) + if (Os.isLinux) linuxBrowsers.flatMap { it.second }.map(::snapProfile) else emptyList()
+        profiles.filter(File::isDirectory).forEach { root ->
+            root.listFiles().orEmpty().filter { it.name !in PROFILE_KEEP }.forEach { it.deleteRecursively() }
+            File(root, "Default").listFiles().orEmpty().filter { it.name in PROFILE_CACHES }.forEach { it.deleteRecursively() }
+        }
+    }
+
+    @Volatile private var signingIn = false
+
+    // A profile's top level: the browser's key for its cookies and the user's profile.
+    private val PROFILE_KEEP = setOf("Local State", "Default", "First Run")
+
+    // Inside the profile: caches only.
+    private val PROFILE_CACHES =
+        setOf(
+            "Cache", "Code Cache", "GPUCache", "DawnCache", "DawnGraphiteCache", "DawnWebGPUCache", "GrShaderCache", "ShaderCache",
+            "Service Worker", "Extensions", "EdgeCoupons", "Edge Profile Picture.png", "optimization_guide_hint_cache_store",
+        )
 
     fun forgetBrowserProfile() {
         profile.deleteRecursively()
@@ -189,7 +217,8 @@ object EdgeSignIn {
                     // A profile of its own needs no keychain entry; this keeps macOS from asking for one.
                     listOfNotNull("--use-mock-keychain".takeIf { Os.isMac }) +
                     "--app=$SIGN_IN_URL"
-            val process = ProcessBuilder(arguments).start()
+            signingIn = true
+            val process = runCatching { ProcessBuilder(arguments).start() }.onFailure { signingIn = false }.getOrThrow()
             try {
                 waitForPages(port)
                 val deadline = System.currentTimeMillis() + SIGN_IN_TIMEOUT_MS
@@ -208,6 +237,10 @@ object EdgeSignIn {
             } finally {
                 closeBrowser(port)
                 process.destroy()
+                // Once the browser has let go of its files.
+                runCatching { process.waitFor(PROFILE_RELEASE_S, TimeUnit.SECONDS) }
+                signingIn = false
+                runCatching { tidyProfile() }
             }
         }
 
