@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="../../releases/latest"><img alt="Version 2.3.5" src="https://img.shields.io/badge/version-2.3.5-2EE6C5?style=for-the-badge&labelColor=12161A"></a>
-  <img alt="Android, Windows, macOS" src="https://img.shields.io/badge/Android%20%7C%20Windows%20%7C%20macOS-12161A?style=for-the-badge">
+  <img alt="Android, Windows, macOS, Linux" src="https://img.shields.io/badge/Android%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux-12161A?style=for-the-badge">
   <a href="LICENSE"><img alt="License GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-12161A?style=for-the-badge"></a>
 </p>
 
@@ -17,6 +17,7 @@
   <a href="../../releases/latest"><img alt="Download for Android" src="https://img.shields.io/badge/Download-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white"></a>
   <a href="../../releases/latest"><img alt="Download for Windows" src="https://img.shields.io/badge/Download-Windows-0078D4?style=for-the-badge&logo=windows11&logoColor=white"></a>
   <a href="../../releases/latest"><img alt="Download for macOS" src="https://img.shields.io/badge/Download-macOS-000000?style=for-the-badge&logo=apple&logoColor=white"></a>
+  <a href="../../releases/latest"><img alt="Download for Linux" src="https://img.shields.io/badge/Download-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black"></a>
 </p>
 
 ---
@@ -26,7 +27,7 @@
 - **All of YouTube Music, none of the noise.** Your library, liked songs, playlists, mixes and recommendations, without ads or distractions.
 - **One account, every device.** What you like, save or play on your phone shows up on your computer, and the other way round.
 - **Lyrics that keep up.** Synced lyrics from eight sources, lit word by word when the song has it, and translated into your language by AI.
-- **Made for each screen.** A light Android app, and a real desktop app for Windows and macOS, not a website in a window.
+- **Made for each screen.** A light Android app, and a real desktop app for Windows, macOS and Linux, not a website in a window.
 
 ## 🎧 Features
 
@@ -46,9 +47,9 @@
 **On Android** — Google Cast to your TV or speaker, song recognition for what's playing around you,
 and the system's media controls on the lock screen and in notifications.
 
-**On Windows and macOS** — a full-screen player with a turning record and big lyrics, a mini
-player that stays on top, an equalizer, crossfade, media keys, keyboard shortcuts, playing on from
-the tray or menu bar, and opening at sign-in.
+**On Windows, macOS and Linux** — a full-screen player with a turning record and big lyrics, a mini
+player that stays on top, an equalizer, crossfade, media keys and the system's media controls,
+keyboard shortcuts, playing on from the tray or menu bar, and opening at sign-in.
 
 ## 📥 Install
 
@@ -73,7 +74,10 @@ Download the file for your device from the [latest release](../../releases/lates
 </details>
 
 <details>
-<summary><b>macOS</b> · <code>Sonara-2.3.5-mac-arm64.dmg</code> · macOS 12 or newer, Apple Silicon (M1 and later)</summary>
+<summary><b>macOS</b> · <code>Sonara-2.3.5-mac-arm64.dmg</code> or <code>Sonara-2.3.5-mac-intel.dmg</code> · macOS 12 or newer</summary>
+
+Take **arm64** for a Mac with Apple Silicon (M1 and later), **intel** for an Intel Mac. Not sure?
+Apple menu → **About This Mac**: "Chip Apple M…" is Apple Silicon, "Processor Intel" is Intel.
 
 1. Open the DMG and drag **Sonara** into **Applications**.
 2. Open Sonara. The app isn't signed by Apple, so macOS asks first: go to
@@ -86,9 +90,33 @@ Download the file for your device from the [latest release](../../releases/lates
 
 </details>
 
+<details>
+<summary><b>Linux</b> · <code>Sonara-2.3.5-linux-amd64.deb</code> or <code>Sonara-2.3.5-linux-x86_64.AppImage</code> · 64-bit PC</summary>
+
+**Debian, Ubuntu, Linux Mint and the like:** install the .deb, by opening it or with
+
+```bash
+sudo apt install ./Sonara-2.3.5-linux-amd64.deb
+```
+
+Sonara then shows in your apps. A newer .deb installs over the old one and keeps your data.
+
+**Any other distribution:** the AppImage runs as it is, no installing needed:
+
+```bash
+chmod +x Sonara-2.3.5-linux-x86_64.AppImage
+./Sonara-2.3.5-linux-x86_64.AppImage
+```
+
+Signing in opens Google's page in **Google Chrome, Chromium, Microsoft Edge, Brave or Vivaldi**
+(Firefox can't be used for it), so one of them needs to be installed. What plays shows in GNOME's
+and KDE's media controls, and the media keys work through them.
+
+</details>
+
 ## ⌨️ Desktop shortcuts
 
-`Ctrl` on Windows, `⌘` on a Mac.
+`Ctrl` on Windows and Linux, `⌘` on a Mac.
 
 | Keys | Does |
 |---|---|
@@ -116,11 +144,12 @@ box: its key is built in, sealed, so there is nothing to set up.
 ./gradlew :app:assembleFossRelease        # Android APK
 ./gradlew -p desktop packageInstaller     # Windows installer (on Windows)
 ./gradlew -p desktop packageDmg           # macOS disk image (on a Mac)
+./gradlew -p desktop packageDeb           # Linux .deb (on Linux; desktop/linux/make_appimage.sh for the AppImage)
 ./gradlew -p desktop run                  # run the desktop app
 ```
 
-No Mac? The **macOS app** workflow in the **Actions** tab builds the DMG on GitHub's Macs. More
-notes are in [AGENTS.md](AGENTS.md).
+No Mac or Linux at hand? The **macOS app** and **Linux app** workflows in the **Actions** tab build
+them on GitHub's machines. More notes are in [AGENTS.md](AGENTS.md).
 
 ## 💚 Credits
 

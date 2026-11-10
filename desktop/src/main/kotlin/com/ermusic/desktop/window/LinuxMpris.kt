@@ -16,6 +16,7 @@ import org.freedesktop.dbus.interfaces.DBusInterface
 import org.freedesktop.dbus.interfaces.Properties
 import org.freedesktop.dbus.messages.DBusSignal
 import org.freedesktop.dbus.types.Variant
+import java.io.File
 
 /** MPRIS's root interface: who the player is. */
 @DBusInterfaceName("org.mpris.MediaPlayer2")
@@ -229,7 +230,21 @@ object LinuxMpris {
 
     fun listen(actions: MprisActions) {
         if (player != null) return
-        player = runCatching { MprisPlayer(DBusConnectionBuilder.forSessionBus().build(), actions) }.getOrNull()
+        player =
+            runCatching { MprisPlayer(sessionBus(), actions) }
+                .onFailure { System.err.println("Sonara: no media controls, the session bus couldn't be reached ($it)") }
+                .getOrNull()
+    }
+
+    /**
+     * The session bus by its socket file. Java can't reach the "abstract" sockets some older setups
+     * name first; the desktop's own bus, in the user's runtime folder, is the same bus by a path.
+     */
+    private fun sessionBus(): DBusConnection {
+        val named = System.getenv("DBUS_SESSION_BUS_ADDRESS").orEmpty().split(';').firstOrNull { it.startsWith("unix:path=") }
+        val runtime = System.getenv("XDG_RUNTIME_DIR")?.let { File(it, "bus") }?.takeIf { it.exists() }?.let { "unix:path=${it.path}" }
+        val address = named ?: runtime ?: return DBusConnectionBuilder.forSessionBus().build()
+        return DBusConnectionBuilder.forAddress(address).build()
     }
 
     fun show(id: String?, title: String?, artist: String?, artUrl: String?, durationMs: Long, positionMs: Long, playing: Boolean) {

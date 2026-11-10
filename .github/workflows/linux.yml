@@ -64,7 +64,10 @@ jobs:
         run: |
           chmod +x out/*.AppImage
           export SONARA_GUEST=1 APPIMAGE_EXTRACT_AND_RUN=1
-          dbus-run-session -- xvfb-run -a -s "-screen 0 1440x900x24" bash -c '
+          # A session bus on a socket file, as desktops have it (/run/user/<id>/bus).
+          dbus-daemon --session --address="unix:path=$RUNNER_TEMP/session-bus" --fork --print-address
+          export DBUS_SESSION_BUS_ADDRESS="unix:path=$RUNNER_TEMP/session-bus"
+          xvfb-run -a -s "-screen 0 1440x900x24" bash -c '
             "$(ls out/*.AppImage)" > out/app.log 2>&1 &
             sleep 40
             import -window root out/linux-window.png
@@ -74,6 +77,9 @@ jobs:
               --method org.freedesktop.DBus.Properties.GetAll org.mpris.MediaPlayer2 || true
             gdbus call --session --dest org.mpris.MediaPlayer2.sonara --object-path /org/mpris/MediaPlayer2 \
               --method org.freedesktop.DBus.Properties.Get org.mpris.MediaPlayer2.Player PlaybackStatus || true
+            echo "--- play/pause, from the desktop"
+            gdbus call --session --dest org.mpris.MediaPlayer2.sonara --object-path /org/mpris/MediaPlayer2 \
+              --method org.mpris.MediaPlayer2.Player.PlayPause || true
           '
           echo "--- app log"; tail -n 60 out/app.log || true
 

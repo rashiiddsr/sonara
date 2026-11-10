@@ -53,7 +53,7 @@ in `docs/perf.md`; never write numbers that were not measured.
   YouTube Music's web API only accepts the session cookies from that flow: an OAuth token from
   the native account chooser was tested and rejected by WEB_REMIX (HTTP 400).
 
-## Windows app (`desktop/`)
+## Desktop app (`desktop/`): Windows, macOS, Linux
 
 A Compose Desktop build of its own (`./gradlew -p desktop run`, `./gradlew -p desktop packageInstaller`),
 kept apart so it cannot disturb the Android build. It compiles `innertube/` from source and uses
@@ -73,7 +73,18 @@ keys and Control Center through Now Playing (`window/MacNowPlaying.kt`), Quit, S
 icon (`window/MacApp.kt`), a launch agent for opening at login (`window/StartAtLogin.kt`), Command
 for Ctrl, data in `~/Library/Application Support/Sonara`. On a Mac, `./gradlew -p desktop packageDmg`
 makes the .dmg. From Windows, `stageAppJars -Psonara.natives=macosx-arm64` and `mac/make_app.py`
-with a Temurin JRE put an unsigned `Sonara.app` in a .zip.
+with a Temurin JRE put an unsigned `Sonara.app` in a .zip. GitHub Actions (`mac.yml`) builds the
+.dmg for Apple Silicon and for Intel on tags `v*`.
+
+It runs on Linux too, with nothing left out: the native title bar stays (each desktop draws its
+own), media controls and keys through MPRIS on the session bus (`window/LinuxMpris.kt`, tested on a
+bus of its own over TCP), the session key in the keyring through `secret-tool` or else a file only
+the user can read (`auth/LinuxKeyring.kt`), sign-in through an installed Chromium browser, Snap ones
+with a profile under `~/snap` (`auth/EdgeSignIn.kt`), an autostart entry, data in
+`$XDG_DATA_HOME/Sonara`, and a window class equal to the menu entry `sonara-Sonara`
+(`window/LinuxDesktop.kt`), so the dock shows the right icon. The tray setting only shows where there
+is a tray (GNOME has none). `./gradlew -p desktop packageDeb` and `linux/make_appimage.sh` package
+it; GitHub Actions (`linux.yml`) builds both on Ubuntu 22.04 and starts the app once to check it.
 
 ## Database
 
