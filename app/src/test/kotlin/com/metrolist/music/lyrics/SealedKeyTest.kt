@@ -13,8 +13,12 @@ import org.junit.Test
 import java.io.File
 import java.util.Properties
 
-/** The sealed key in BuildConfig opens to exactly the key in local.properties, and only there. */
+/** The built-in sealed key opens, and to exactly the key in local.properties when one is there. */
 class SealedKeyTest {
+    private companion object {
+        const val MIN_KEY_LENGTH = 20
+    }
+
     private val expected: String? =
         listOf(File("local.properties"), File("../local.properties"))
             .firstOrNull(File::isFile)
@@ -25,9 +29,8 @@ class SealedKeyTest {
     @Test
     fun sealedKeyOpensToTheOwnersKey() {
         val opened = SealedKey.open(BuildConfig.AI_TRANSLATE_KEY_SEALED)
-        if (expected == null) {
-            assertEquals("no key configured, nothing sealed", "", opened)
-        } else {
+        assertTrue("the built-in key opens", opened.length > MIN_KEY_LENGTH)
+        if (expected != null) {
             // Compared without printing either value.
             assertTrue("the sealed key opens to the configured one", opened == expected)
             assertFalse("the build holds no readable copy", BuildConfig.AI_TRANSLATE_KEY_SEALED.contains(expected))

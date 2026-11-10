@@ -44,6 +44,9 @@ fun sealKey(key: String): String {
 val secretsDir = layout.buildDirectory.dir("generated/secrets")
 val generateSecrets by tasks.registering {
     val source = rootProject.file("../local.properties")
+    // The built-in key, sealed (see app/build.gradle.kts); a key in local.properties takes its place.
+    val sealedFile = rootProject.file("../secrets/translator.sealed")
+    if (sealedFile.exists()) inputs.file(sealedFile)
     val target = secretsDir.map { it.file("com/ermusic/desktop/BuildSecrets.kt") }
     if (source.exists()) inputs.file(source)
     outputs.file(target)
@@ -57,7 +60,7 @@ val generateSecrets by tasks.registering {
             package com.ermusic.desktop
 
             internal object BuildSecrets {
-                private const val AI_KEY_SEALED = "${sealKey(setting("SONARA_AI_KEY", ""))}"
+                private const val AI_KEY_SEALED = "${setting("SONARA_AI_KEY", "").let { if (it.isNotEmpty()) sealKey(it) else sealedFile.takeIf { f -> f.isFile }?.readText()?.trim().orEmpty() }}"
                 val AI_KEY: String by lazy { SealedKey.open(AI_KEY_SEALED) }
                 const val AI_BASE_URL = "${setting("SONARA_AI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/")}"
                 const val AI_MODEL = "${setting("SONARA_AI_MODEL", "gemini-flash-lite-latest")}"

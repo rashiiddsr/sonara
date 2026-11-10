@@ -34,6 +34,25 @@ fun sealKey(key: String): String {
     return Base64.getEncoder().encodeToString(salt + iv + cipher.doFinal(key.toByteArray(Charsets.UTF_8)))
 }
 
+// The translator key is built in: its sealed form is kept in the repository, so every build has it
+// with nothing to set up. A key in local.properties (or the environment) takes its place; run
+// `./gradlew :app:sealTranslatorKey --no-configuration-cache` to seal that one into the file.
+val sealedKeyFile = rootProject.file("secrets/translator.sealed")
+val sealedTranslatorKey: String =
+    aiSetting("SONARA_AI_KEY", "").let { key ->
+        if (key.isNotEmpty()) sealKey(key) else sealedKeyFile.takeIf { it.isFile }?.readText()?.trim().orEmpty()
+    }
+
+tasks.register("sealTranslatorKey") {
+    description = "Seals the SONARA_AI_KEY of local.properties into secrets/translator.sealed."
+    doLast {
+        check(aiSetting("SONARA_AI_KEY", "").isNotEmpty()) { "Put SONARA_AI_KEY in local.properties first." }
+        sealedKeyFile.parentFile.mkdirs()
+        sealedKeyFile.writeText(sealedTranslatorKey + "\n")
+        println("Sealed into ${sealedKeyFile.path}")
+    }
+}
+
 val baseApplicationId = "com.ermusic.android"
 val applicationIdOverride = System.getenv("ERMUSIC_APPLICATION_ID")?.takeIf { it.isNotBlank() }
 val appNameOverride = System.getenv("ERMUSIC_APP_NAME")?.takeIf { it.isNotBlank() }
@@ -83,7 +102,7 @@ android {
 
         buildConfigField("String", "ARCHITECTURE", "\"universal\"")
         // OpenAI-compatible chat endpoint; the default is Gemini's.
-        buildConfigField("String", "AI_TRANSLATE_KEY_SEALED", "\"${sealKey(aiSetting("SONARA_AI_KEY", ""))}\"")
+        buildConfigField("String", "AI_TRANSLATE_KEY_SEALED", "\"$sealedTranslatorKey\"")
         buildConfigField("String", "AI_TRANSLATE_BASE_URL", "\"${aiSetting("SONARA_AI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/")}\"")
         buildConfigField("String", "AI_TRANSLATE_MODEL", "\"${aiSetting("SONARA_AI_MODEL", "gemini-flash-lite-latest")}\"")
         // Tried in turn when the model above is busy or fails; comma separated.

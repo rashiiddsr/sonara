@@ -1,6 +1,7 @@
 name: macOS app
 
 # Builds Sonara's .dmg on a Mac (Apple Silicon): jpackage only packages for the system it runs on.
+# The AI translator's key is built in (secrets/translator.sealed), so nothing needs setting up.
 on:
   workflow_dispatch:
   push:
@@ -26,17 +27,6 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-
-      - name: Build in the AI translator key, if the repository has one
-        env:
-          SONARA_AI_KEY: ${{ secrets.SONARA_AI_KEY }}
-        run: |
-          if [ -n "$SONARA_AI_KEY" ]; then
-            printf 'SONARA_AI_KEY=%s\n' "$SONARA_AI_KEY" > local.properties
-            echo "Translator key: set"
-          else
-            echo "Translator key: not set, lyrics will show untranslated"
-          fi
 
       - name: Build the .dmg
         run: ./gradlew --console=plain -p desktop packageDmg

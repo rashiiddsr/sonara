@@ -11,8 +11,12 @@ import org.junit.Test
 import java.io.File
 import java.util.Properties
 
-/** The sealed key built into the app opens to exactly the key in local.properties. */
+/** The built-in sealed key opens, and to exactly the key in local.properties when one is there. */
 class SealedKeyTest {
+    private companion object {
+        const val MIN_KEY_LENGTH = 20
+    }
+
     private val expected: String? =
         listOf(File("../local.properties"), File("local.properties"))
             .firstOrNull(File::isFile)
@@ -23,7 +27,8 @@ class SealedKeyTest {
     @Test
     fun sealedKeyOpensToTheOwnersKey() {
         // Compared without printing either value.
-        if (expected == null) assertEquals("", BuildSecrets.AI_KEY) else assertTrue("the sealed key opens to the configured one", BuildSecrets.AI_KEY == expected)
+        assertTrue("the built-in key opens", BuildSecrets.AI_KEY.length > MIN_KEY_LENGTH)
+        if (expected != null) assertTrue("the sealed key opens to the configured one", BuildSecrets.AI_KEY == expected)
     }
 
     @Test

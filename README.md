@@ -1,103 +1,135 @@
-# Sonara
+<p align="center">
+  <img src="docs/assets/banner.png" alt="Sonara: Find your sound." width="100%">
+</p>
 
-**Find your sound.** A lean YouTube Music player for Android, Windows and macOS.
+<p align="center">
+  <a href="../../releases/latest"><img alt="Version 2.3.5" src="https://img.shields.io/badge/version-2.3.5-2EE6C5?style=for-the-badge&labelColor=12161A"></a>
+  <img alt="Android, Windows, macOS" src="https://img.shields.io/badge/Android%20%7C%20Windows%20%7C%20macOS-12161A?style=for-the-badge">
+  <a href="LICENSE"><img alt="License GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-12161A?style=for-the-badge"></a>
+</p>
 
-Sonara signs in with your Google account and plays your YouTube Music: your library, playlists,
-history and recommendations, kept in sync with the phone and the web. No ads, no clutter.
+<p align="center">
+  <b>Sonara</b> is a fast, clean YouTube Music player for your phone and your computer.<br>
+  Sign in once, and your library, playlists and history follow you everywhere, with no ads and no clutter.
+</p>
 
-## Download
+<p align="center">
+  <a href="../../releases/latest"><img alt="Download for Android" src="https://img.shields.io/badge/Download-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white"></a>
+  <a href="../../releases/latest"><img alt="Download for Windows" src="https://img.shields.io/badge/Download-Windows-0078D4?style=for-the-badge&logo=windows11&logoColor=white"></a>
+  <a href="../../releases/latest"><img alt="Download for macOS" src="https://img.shields.io/badge/Download-macOS-000000?style=for-the-badge&logo=apple&logoColor=white"></a>
+</p>
 
-Get the latest version from [Releases](../../releases/latest):
+---
 
-| System | File | Notes |
-|---|---|---|
-| Android 8.0 or newer | `Sonara-<version>.apk` | Allow installing apps from your browser or file manager when asked. |
-| Windows 10 / 11 (64-bit) | `Sonara-<version>.msi` | If SmartScreen warns, choose **More info → Run anyway**. Installs for your user only; a newer version replaces the old one. |
-| macOS 12 or newer, Apple Silicon (M1 and later) | `Sonara-<version>-mac-arm64.dmg` | Drag Sonara to Applications. The app is not signed by Apple: the first time, open it, then go to **System Settings → Privacy & Security → Open Anyway**. |
+## ✨ Why Sonara
 
-If macOS still refuses ("damaged" or "can't be opened"), run this once in Terminal:
+- **All of YouTube Music, none of the noise.** Your library, liked songs, playlists, mixes and recommendations, without ads or distractions.
+- **One account, every device.** What you like, save or play on your phone shows up on your computer, and the other way round.
+- **Lyrics that keep up.** Synced lyrics from eight sources, lit word by word when the song has it, and translated into your language by AI.
+- **Made for each screen.** A light Android app, and a real desktop app for Windows and macOS, not a website in a window.
+
+## 🎧 Features
+
+| | |
+|---|---|
+| 🔐 **Google sign-in** | Your YouTube Music account, with library, likes, playlists and history kept in sync |
+| 🔎 **Search** | Songs, albums, artists, playlists and podcasts, with suggestions as you type |
+| 🏠 **Home and Browse** | Recommendations, mixes, charts, moods and genres |
+| 🎤 **Lyrics** | Eight sources, synced line by line or word by word |
+| 🌐 **AI lyric translation** | Built in: turn it on in Settings, choose a language, and lyrics are translated as they load |
+| 📻 **Radio and autoplay** | Endless music from any song or artist |
+| ⬇️ **Downloads** | Keep songs for offline listening |
+| 📝 **Playlists** | Create, edit, reorder, collaborate with friends, and import from a link |
+| 🌙 **Sleep timer** | Stop after a set time or at the end of the song |
+| 🔊 **Sound** | Normalized volume and mono audio |
+
+**On Android** — Google Cast to your TV or speaker, song recognition for what's playing around you,
+and the system's media controls on the lock screen and in notifications.
+
+**On Windows and macOS** — a full-screen player with a turning record and big lyrics, a mini
+player that stays on top, an equalizer, crossfade, media keys, keyboard shortcuts, playing on from
+the tray or menu bar, and opening at sign-in.
+
+## 📥 Install
+
+Download the file for your device from the [latest release](../../releases/latest).
+
+<details>
+<summary><b>Android</b> · <code>Sonara-2.3.5.apk</code> · Android 8.0 or newer</summary>
+
+1. Open the APK on your phone.
+2. If asked, allow your browser or file manager to install apps.
+3. Tap **Install**. A newer version installs over the old one and keeps your data.
+
+</details>
+
+<details>
+<summary><b>Windows</b> · <code>Sonara-2.3.5.msi</code> · Windows 10 or 11, 64-bit</summary>
+
+1. Run the MSI. If SmartScreen appears, choose **More info → Run anyway**.
+2. Follow the installer; it installs for your user, no administrator needed.
+3. A newer version replaces the old one and keeps your data.
+
+</details>
+
+<details>
+<summary><b>macOS</b> · <code>Sonara-2.3.5-mac-arm64.dmg</code> · macOS 12 or newer, Apple Silicon (M1 and later)</summary>
+
+1. Open the DMG and drag **Sonara** into **Applications**.
+2. Open Sonara. The app isn't signed by Apple, so macOS asks first: go to
+   **System Settings → Privacy & Security** and click **Open Anyway**.
+3. If macOS says the app is damaged or can't be opened, run this once in Terminal:
+
+   ```bash
+   sudo xattr -dr com.apple.quarantine /Applications/Sonara.app
+   ```
+
+</details>
+
+## ⌨️ Desktop shortcuts
+
+`Ctrl` on Windows, `⌘` on a Mac.
+
+| Keys | Does |
+|---|---|
+| `Ctrl/⌘ K` | Search |
+| `Space` or `K` | Play / pause |
+| `Ctrl/⌘ →` / `Ctrl/⌘ ←` | Next / previous song |
+| `→` / `←` | Forward / back 5 seconds |
+| `L` / `J` | Forward / back 10 seconds |
+| `↑` / `↓` | Volume up / down |
+| `M` | Mute |
+| `F` | Full screen |
+| `Q` | Queue |
+| `Ctrl/⌘ L` | Lyrics |
+| `Ctrl/⌘ S` / `Ctrl/⌘ R` | Shuffle / repeat |
+| `Ctrl/⌘ D` | Like the song |
+| `Ctrl/⌘ ,` | Settings |
+| `Alt ←` / `Alt →` | Back / forward between pages |
+
+## 🛠️ Build from source
+
+You need JDK 21; the Android app also needs the Android SDK. The AI translator works out of the
+box: its key is built in, sealed, so there is nothing to set up.
 
 ```bash
-sudo xattr -dr com.apple.quarantine /Applications/Sonara.app
+./gradlew :app:assembleFossRelease        # Android APK
+./gradlew -p desktop packageInstaller     # Windows installer (on Windows)
+./gradlew -p desktop packageDmg           # macOS disk image (on a Mac)
+./gradlew -p desktop run                  # run the desktop app
 ```
 
-## What it does
+No Mac? The **macOS app** workflow in the **Actions** tab builds the DMG on GitHub's Macs. More
+notes are in [AGENTS.md](AGENTS.md).
 
-**Everywhere**
+## 💚 Credits
 
-- Google sign-in; your library, liked songs, playlists and listening history stay in sync with YouTube Music
-- Search with suggestions, Home, Browse, album, artist and playlist pages
-- Lyrics from eight sources, word by word where the source has it
-- AI lyric translator (optional, off by default)
-- Downloads for offline listening, a queue, radio, sleep timer, normalized volume and mono audio
-- Playlist editing, collaboration and import
+Sonara is based on [**Metrolist**](https://github.com/MetrolistGroup/Metrolist). Thank you to the
+Metrolist project for the foundation this app is built on.
 
-**Android** — Google Cast, song recognition, background playback with the system media controls.
-
-**Windows and macOS** — a full-screen player with a turning record and lyrics, mini player,
-equalizer, crossfade, media keys, keyboard shortcuts (`Ctrl`/`⌘` + `K` to search), keep playing
-from the tray or menu bar, and opening at sign-in.
-
-## AI lyric translator: where the key goes
-
-The translator uses an OpenAI-compatible endpoint (Gemini by default). The key is built into the
-apps when they are compiled; users are never asked for one. Without a key, everything else works
-and lyrics simply show untranslated.
-
-Put it in `local.properties` at the root of the project (create the file if it isn't there):
-
-```properties
-SONARA_AI_KEY=your-api-key
-# Optional:
-# SONARA_AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
-# SONARA_AI_MODEL=gemini-flash-lite-latest
-# SONARA_AI_FALLBACK_MODELS=model-a,model-b
-```
-
-`local.properties` is ignored by git: never commit it. For builds made by GitHub Actions, add the
-same key as a repository secret named `SONARA_AI_KEY` (**Settings → Secrets and variables →
-Actions → New repository secret**).
-
-## Build
-
-You need JDK 21. The Android app also needs the Android SDK (compile SDK 37).
-
-**Android**
-
-```bash
-./gradlew :app:assembleFossDebug        # debug APK
-./gradlew :app:assembleFossRelease      # release APK, in app/build/outputs/apk/foss/release/
-./gradlew :app:testFossDebugUnitTest :app:lintFossDebug
-```
-
-**Windows** (on Windows)
-
-```bash
-./gradlew -p desktop run                # try it
-./gradlew -p desktop packageInstaller   # desktop/build/compose/binaries/main/msi/Sonara-<version>.msi
-./gradlew -p desktop test               # UI tests, headless
-```
-
-**macOS** (on a Mac)
-
-```bash
-./gradlew -p desktop run
-./gradlew -p desktop packageDmg         # desktop/build/compose/binaries/main/dmg/Sonara-<version>.dmg
-```
-
-No Mac? The **macOS app** workflow builds the .dmg on GitHub's Macs: open the **Actions** tab,
-choose **macOS app → Run workflow**, and download the .dmg from the finished run. It also runs by
-itself for every tag that starts with `v`.
-
-Notes for contributors are in [AGENTS.md](AGENTS.md).
-
-## License and credits
+## 📄 License
 
 Sonara is free software under the [GNU General Public License v3.0](LICENSE).
 
-Sonara is based on [Metrolist](https://github.com/MetrolistGroup/Metrolist). Copyright notices
-and license headers are kept in the source files. This does not imply affiliation with or
-endorsement by Metrolist.
-
-Sonara is not affiliated with YouTube, YouTube Music or Google. Playback relies on YouTube's
-unofficial API and can stop working when YouTube changes it.
+Sonara is not affiliated with YouTube, YouTube Music, Google or Metrolist. Playback uses YouTube's
+unofficial API and may stop working when YouTube changes it.

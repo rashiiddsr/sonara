@@ -40,10 +40,13 @@ in `docs/perf.md`; never write numbers that were not measured.
   `ui/player/LyricsPage.kt`, Settings > Lyrics). Off by default; when on, lyrics are translated
   as soon as they are fetched, into the chosen language (English by default). The model gets
   the whole song numbered and answers only for the lines it translated, so mixed-language songs
-  and "ooh" lines are handled. The owner's key is built in from `local.properties`
-  (`SONARA_AI_KEY`, optional `SONARA_AI_BASE_URL`, `SONARA_AI_MODEL`, `SONARA_AI_FALLBACK_MODELS`;
-  an OpenAI-compatible endpoint, Gemini by default); users are never asked for one. AI only: when
-  every model fails, lyrics show without a translation. Stored in `lyrics.translatedLyrics`.
+  and "ooh" lines are handled. The owner's key is built in, sealed with AES-GCM in
+  `secrets/translator.sealed` (opened by `SealedKey.kt` in both apps), so every build has it with
+  nothing to set up and no app holds a readable copy. To change it, put the new `SONARA_AI_KEY` in
+  `local.properties` and run `./gradlew :app:sealTranslatorKey --no-configuration-cache`; optional
+  `SONARA_AI_BASE_URL`, `SONARA_AI_MODEL`, `SONARA_AI_FALLBACK_MODELS` (an OpenAI-compatible
+  endpoint, Gemini by default). Users are never asked for a key. AI only: when every model fails,
+  lyrics show without a translation. Stored in `lyrics.translatedLyrics`.
 - The app always speaks English, whatever the phone's language, with no setting to change it
   (owner's choice, `utils/AppLanguage.kt`). The Indonesian strings stay in `values-in/` for now.
 - Sign-in is required (`WelcomeScreen`): one Google sign-in page in a sheet, inside the app, because
@@ -58,7 +61,7 @@ the desktop artifact of InnerTubeX. FFmpeg decodes (songs are fetched whole into
 because YouTube refuses the range requests a seek on a streamed URL makes). Sign-in opens Google's
 page in a window of the default Chromium browser (Edge otherwise) on a profile of its own and reads
 the cookies over the local debugging port; the session is stored encrypted with DPAPI. The AI key
-comes from `local.properties` into generated code under `build/`. `window/WindowChrome.kt` hands the
+is the built-in sealed one, into generated code under `build/`. `window/WindowChrome.kt` hands the
 title bar's space to the app over JNA and keeps the native frame (resize, snap). Bump
 `appVersion` for every installer. The Android app's lyric sources are compiled as they are
 (`fromAndroid` in the build file, with small stand-ins under `src/main/kotlin/android/`). `SONARA_GUEST=1` skips sign-in for development.
