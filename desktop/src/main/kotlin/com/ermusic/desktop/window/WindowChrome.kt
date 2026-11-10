@@ -118,6 +118,9 @@ object WindowChrome {
             installMac(target)
             return
         }
+        // Linux keeps its own title bar: each desktop draws a different one, and resizing,
+        // snapping and its window menu stay as people know them.
+        if (!Os.isWindows) return
         runCatching {
             val handle = HWND(Native.getComponentPointer(target))
             hwnd = handle
@@ -218,7 +221,7 @@ object WindowChrome {
 
     /** Puts the window in front of the others, un-minimized. */
     fun bringToFront() {
-        if (Os.isMac) {
+        if (!Os.isWindows) {
             val target = window ?: return
             if (target.extendedState and Frame.ICONIFIED != 0) target.extendedState = target.extendedState and Frame.ICONIFIED.inv()
             target.toFront()
@@ -231,7 +234,7 @@ object WindowChrome {
     }
 
     fun minimize() {
-        if (Os.isMac) {
+        if (!Os.isWindows) {
             window?.let { it.extendedState = it.extendedState or Frame.ICONIFIED }
             return
         }
@@ -239,7 +242,7 @@ object WindowChrome {
     }
 
     fun toggleMaximize() {
-        if (Os.isMac) {
+        if (!Os.isWindows) {
             // The Mac's zoom: the window fills the screen around the menu bar and the Dock.
             window?.let { it.extendedState = if (it.extendedState and Frame.MAXIMIZED_BOTH == Frame.MAXIMIZED_BOTH) Frame.NORMAL else Frame.MAXIMIZED_BOTH }
             return
@@ -250,7 +253,7 @@ object WindowChrome {
 
     /** True full screen: no frame, over the taskbar, like a video. On a Mac, its own full screen. */
     fun setFullscreen(on: Boolean) {
-        if (Os.isMac) {
+        if (!Os.isWindows) {
             val target = window ?: return
             if (on == fullscreen) return
             fullscreen = on
@@ -324,10 +327,10 @@ object WindowChrome {
         }
     }
 
-    /** Polled by the app while it shows full screen, so leaving it from the Mac's side is noticed. */
+    /** Polled by the app while it shows full screen, so leaving it from the system's side (Mac, Linux) is noticed. */
     fun checkMacFullscreen() {
         val target = window ?: return
-        if (!Os.isMac || !fullscreen) return
+        if (Os.isWindows || !fullscreen) return
         val now = target.placement == WindowPlacement.Fullscreen
         when {
             now -> macFullscreenReached = true

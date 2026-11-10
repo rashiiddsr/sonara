@@ -14,7 +14,8 @@ import kotlin.math.abs
 /**
  * The keyboard's media keys, anywhere in the system. On Windows a key another app already holds
  * stays with that app; RegisterHotKey delivers to the thread that registered it, hence the thread
- * of its own. On a Mac they come through Now Playing ([MacNowPlaying]), which also shows the song.
+ * of its own. On a Mac they come through Now Playing ([MacNowPlaying]), which also shows the song;
+ * on Linux through MPRIS ([LinuxMpris]), the desktop's media controls.
  */
 object MediaKeys {
     private const val WM_HOTKEY = 0x0312
@@ -34,9 +35,14 @@ object MediaKeys {
         onPlay: () -> Unit = onPlayPause,
         onPause: () -> Unit = onPlayPause,
         onSeek: (Long) -> Unit = {},
+        onRaise: () -> Unit = {},
     ) {
         if (Os.isMac) {
             MacNowPlaying.listen(onPlayPause, onPlay, onPause, onNext, onPrevious, onSeek)
+            return
+        }
+        if (Os.isLinux) {
+            LinuxMpris.listen(MprisActions(onPlayPause, onPlay, onPause, onNext, onPrevious, onSeek, onRaise))
             return
         }
         if (!Os.isWindows) return
@@ -51,23 +57,27 @@ object MediaKeys {
         }
     }
 
-    /** The song now, for the Mac's Now Playing; nothing to do on Windows. */
-    fun nowPlaying(id: String?, title: String?, artist: String?, durationMs: Long, positionMs: Long, playing: Boolean) {
-        if (!Os.isMac) return
+    /** The song now, for the Mac's Now Playing and Linux's media controls; nothing to do on Windows. */
+    fun nowPlaying(id: String?, title: String?, artist: String?, artUrl: String?, durationMs: Long, positionMs: Long, playing: Boolean) {
+        if (Os.isWindows) return
         val last = shown
         if (last != null && last.id == id && last.playing == playing && last.durationMs == durationMs) return
         shown = Shown(id, playing, durationMs, positionMs, System.currentTimeMillis())
-        MacNowPlaying.show(title?.takeIf { id != null }, artist, durationMs, positionMs, playing)
+        if (Os.isLinux) {
+            LinuxMpris.show(id, title, artist, artUrl, durationMs, positionMs, playing)
+        } else {
+            MacNowPlaying.show(title?.takeIf { id != null }, artist, durationMs, positionMs, playing)
+        }
     }
 
     /** Where the song is; Now Playing is told again only when it jumped (a seek), not as it runs. */
     fun position(positionMs: Long, title: String?, artist: String?) {
-        if (!Os.isMac) return
+        if (Os.isWindows) return
         val last = shown ?: return
         if (last.id == null) return
         val expected = if (last.playing) last.positionMs + (System.currentTimeMillis() - last.at) else last.positionMs
         if (abs(positionMs - expected) < DRIFT_MS) return
         shown = last.copy(positionMs = positionMs, at = System.currentTimeMillis())
-        MacNowPlaying.show(title, artist, last.durationMs, positionMs, last.playing)
+        if (Os.isLinux) LinuxMpris.seeked(positionMs) else MacNowPlaying.show(title, artist, last.durationMs, positionMs, last.playing)
     }
 }

@@ -45,6 +45,7 @@ import com.ermusic.desktop.playback.Equalizer
 import com.ermusic.desktop.playback.LyricsTranslator
 import com.ermusic.desktop.playback.SongCache
 import com.ermusic.desktop.Os
+import com.ermusic.desktop.keepsPlayingInTray
 import com.ermusic.desktop.window.StartAtLogin
 import kotlin.math.roundToInt
 
@@ -152,6 +153,8 @@ fun SettingsScreen(app: AppState) {
                 Group(Os.name) {
                     if (Os.isMac) {
                         SwitchRow("Keep playing in the menu bar", "Closing the window leaves Sonara in the menu bar.", Settings.closeToTray)
+                    } else if (Os.isLinux) {
+                        if (keepsPlayingInTray) SwitchRow("Keep playing in the tray", "Closing the window leaves Sonara in the system tray.", Settings.closeToTray)
                     } else {
                         SwitchRow("Keep playing in the tray", "Closing the window leaves Sonara in the taskbar corner.", Settings.closeToTray)
                     }

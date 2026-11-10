@@ -1,0 +1,97 @@
+name: Linux app
+
+# Builds Sonara for Linux (x86_64): a .deb for Debian, Ubuntu and Mint, and an AppImage for the
+# rest. jpackage only packages for the system it runs on. Built on the older Ubuntu so the .deb's
+# dependencies have the names both older and newer releases know.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Build .deb and AppImage
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Packaging and test tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fakeroot xvfb imagemagick x11-utils dbus libglib2.0-bin
+
+      - name: Test
+        run: xvfb-run -a ./gradlew --console=plain -p desktop test
+
+      - name: Build the .deb and the app folder
+        run: ./gradlew --console=plain -p desktop packageDeb createDistributable
+
+      - name: Build the AppImage
+        run: |
+          version=$(sed -n 's/^val appVersion = "\(.*\)"/\1/p' desktop/build.gradle.kts)
+          curl -fsSL -o appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool
+          mkdir -p out
+          APPIMAGE_EXTRACT_AND_RUN=1 desktop/linux/make_appimage.sh \
+            desktop/build/compose/binaries/main/app/Sonara \
+            desktop/src/main/resources/icon.png \
+            "out/Sonara-$version-linux-x86_64.AppImage" \
+            ./appimagetool
+          for f in desktop/build/compose/binaries/main/deb/*.deb; do cp "$f" "out/Sonara-$version-linux-amd64.deb"; done
+          ls -la out
+
+      - name: Look inside the .deb
+        run: |
+          deb=$(ls out/*.deb)
+          dpkg-deb --info "$deb"
+          dpkg-deb --contents "$deb" | grep -E "\.desktop|bin/Sonara|\.png"
+
+      - name: Start it (signed out), with a desktop bus
+        run: |
+          chmod +x out/*.AppImage
+          export SONARA_GUEST=1 APPIMAGE_EXTRACT_AND_RUN=1
+          dbus-run-session -- xvfb-run -a -s "-screen 0 1440x900x24" bash -c '
+            "$(ls out/*.AppImage)" > out/app.log 2>&1 &
+            sleep 40
+            import -window root out/linux-window.png
+            echo "--- window class"; xprop -name Sonara WM_CLASS || true
+            echo "--- media player on the bus"
+            gdbus call --session --dest org.mpris.MediaPlayer2.sonara --object-path /org/mpris/MediaPlayer2 \
+              --method org.freedesktop.DBus.Properties.GetAll org.mpris.MediaPlayer2 || true
+            gdbus call --session --dest org.mpris.MediaPlayer2.sonara --object-path /org/mpris/MediaPlayer2 \
+              --method org.freedesktop.DBus.Properties.Get org.mpris.MediaPlayer2.Player PlaybackStatus || true
+          '
+          echo "--- app log"; tail -n 60 out/app.log || true
+
+      - name: Upload the packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sonara-Linux
+          path: |
+            out/*.deb
+            out/*.AppImage
+          if-no-files-found: error
+
+      - name: Upload the check
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sonara-Linux-check
+          path: |
+            out/linux-window.png
+            out/app.log
+          if-no-files-found: ignore

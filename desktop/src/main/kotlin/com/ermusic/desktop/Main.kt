@@ -64,6 +64,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
+import androidx.compose.ui.window.isTraySupported
 import androidx.compose.ui.window.rememberWindowState
 import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
@@ -116,6 +117,7 @@ import com.ermusic.desktop.ui.Spacing
 import com.ermusic.desktop.ui.TitleBar
 import com.ermusic.desktop.ui.appBackdrop
 import com.ermusic.desktop.ui.handCursor
+import com.ermusic.desktop.window.LinuxDesktop
 import com.ermusic.desktop.window.MacApp
 import com.ermusic.desktop.window.MediaKeys
 import com.ermusic.desktop.window.SingleInstance
@@ -149,7 +151,11 @@ private const val FULLSCREEN_CHECK_MS = 500L
 /** Set by a developer to look around without an account. */
 private val guestAllowed = System.getenv("SONARA_GUEST") != null
 
+/** Closing to the tray needs a tray: GNOME has none without an extension, and the window would just vanish. */
+val keepsPlayingInTray: Boolean get() = !Os.isLinux || isTraySupported
+
 fun main() {
+    LinuxDesktop.nameWindows()
     if (!SingleInstance.claim()) return
     // Left alone, the client sends the system's full tag (en-ID, say) as hl, and YouTube answers
     // every request with HTTP 400. The app speaks English; the country still picks the charts.
@@ -164,13 +170,15 @@ fun main() {
         onPlay = { if (!player.state.value.playing) player.toggle() },
         onPause = { if (player.state.value.playing) player.toggle() },
         onSeek = player::seek,
+        onRaise = SingleInstance::requestShow,
     )
-    if (Os.isMac) {
-        // The Mac shows what plays in Control Center, and sends the media keys to whoever does.
+    if (!Os.isWindows) {
+        // The Mac shows what plays in Control Center, Linux in its media controls, and both send
+        // the media keys to whoever does.
         appScope.launch {
             player.state.collect { state ->
                 val track = state.current
-                MediaKeys.nowPlaying(track?.id, track?.title, track?.artists, state.durationMs, player.position.value, state.playing)
+                MediaKeys.nowPlaying(track?.id, track?.title, track?.artists, track?.artUrl, state.durationMs, player.position.value, state.playing)
             }
         }
         appScope.launch {
@@ -209,7 +217,7 @@ fun main() {
             }
 
         fun close() {
-            if (Settings.closeToTray.value) {
+            if (Settings.closeToTray.value && keepsPlayingInTray) {
                 visible = false
             } else {
                 player.shutdown()
@@ -284,7 +292,7 @@ fun main() {
             state = windowState,
             onPreviewKeyEvent = { handleKey(app, it, ::close) },
         ) {
-            if (Os.isMac) {
+            if (!Os.isWindows) {
                 LaunchedEffect(app.fullscreen) {
                     while (app.fullscreen) {
                         delay(FULLSCREEN_CHECK_MS)
@@ -452,7 +460,7 @@ private fun WelcomeScreen(onSignedIn: (Account) -> Unit) {
                                 onSignedIn(signedIn)
                             }
                         } catch (_: NoBrowserException) {
-                            problem = "Signing in needs Chrome, Edge, Brave or Vivaldi."
+                            problem = if (Os.isLinux) "Signing in needs Chrome, Chromium, Edge, Brave or Vivaldi." else "Signing in needs Chrome, Edge, Brave or Vivaldi."
                         } catch (error: Exception) {
                             problem = "Couldn't sign in (${error.message})."
                         }

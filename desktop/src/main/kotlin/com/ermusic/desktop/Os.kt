@@ -9,9 +9,15 @@ package com.ermusic.desktop
 object Os {
     val isMac: Boolean = System.getProperty("os.name").orEmpty().startsWith("Mac", ignoreCase = true)
     val isWindows: Boolean = System.getProperty("os.name").orEmpty().startsWith("Windows", ignoreCase = true)
+    val isLinux: Boolean = System.getProperty("os.name").orEmpty().startsWith("Linux", ignoreCase = true)
 
     /** The name people know the system by. */
-    val name: String = if (isMac) "macOS" else "Windows"
+    val name: String =
+        when {
+            isMac -> "macOS"
+            isLinux -> "Linux"
+            else -> "Windows"
+        }
 
     /** The key that goes with shortcuts: Command on a Mac, Control elsewhere. */
     val shortcutKey: String = if (isMac) "⌘" else "Ctrl "

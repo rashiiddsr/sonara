@@ -92,19 +92,26 @@ val ffmpegPresets = "1.5.14"
 
 // FFmpeg's natives for the system being built on: jpackage only packages for the system it runs on.
 val buildsOnMac = System.getProperty("os.name").startsWith("Mac", ignoreCase = true)
+val buildsOnLinux = System.getProperty("os.name").startsWith("Linux", ignoreCase = true)
+val buildsOnArm = System.getProperty("os.arch") == "aarch64"
 val nativePlatform =
     providers.gradleProperty("sonara.natives").orNull
         ?: when {
-            buildsOnMac && System.getProperty("os.arch") == "aarch64" -> "macosx-arm64"
+            buildsOnMac && buildsOnArm -> "macosx-arm64"
             buildsOnMac -> "macosx-x86_64"
+            buildsOnLinux && buildsOnArm -> "linux-arm64"
+            buildsOnLinux -> "linux-x86_64"
             else -> "windows-x86_64"
         }
+val dbusJava = "5.1.1"
 
 dependencies {
     implementation(
         when (nativePlatform) {
             "macosx-arm64" -> compose.desktop.macos_arm64
             "macosx-x86_64" -> compose.desktop.macos_x64
+            "linux-x86_64" -> compose.desktop.linux_x64
+            "linux-arm64" -> compose.desktop.linux_arm64
             else -> compose.desktop.currentOs
         },
     )
@@ -120,6 +127,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.11.0")
     implementation("net.java.dev.jna:jna-platform:5.17.0")
     implementation("org.json:json:20250517")
+    // Linux: the song in the desktop's media controls, and the media keys, over D-Bus (MPRIS).
+    implementation("com.github.hypfvieh:dbus-java-core:$dbusJava")
+    implementation("com.github.hypfvieh:dbus-java-transport-native-unixsocket:$dbusJava")
+    implementation("org.slf4j:slf4j-nop:2.0.17")
 
     // Audio decoding: FFmpeg, natives for this system only, from Maven Central.
     implementation("org.bytedeco:javacv:$ffmpegPresets") {
@@ -134,6 +145,8 @@ dependencies {
 
     // UI tests run headless: ./gradlew -p desktop test
     testImplementation(compose.desktop.uiTestJUnit4)
+    // A D-Bus of its own over TCP, so the MPRIS test runs on any system.
+    testImplementation("com.github.hypfvieh:dbus-java-transport-tcp:$dbusJava")
 }
 
 compose.desktop {
@@ -141,9 +154,12 @@ compose.desktop {
         mainClass = "com.ermusic.desktop.MainKt"
         // The Mac's title bar and menus follow its light or dark appearance; Windows ignores these.
         jvmArgs += listOf("-Xmx512m", "-Dfile.encoding=UTF-8", "-Dapple.awt.application.appearance=system", "-Dapple.awt.application.name=Sonara")
+        // Linux: the window's class names it after the menu entry, so the dock shows Sonara's icon (LinuxDesktop.kt).
+        if (buildsOnLinux) jvmArgs += "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED"
         nativeDistributions {
-            // Each system builds its own: Windows the .msi and .exe, a Mac the .dmg.
-            targetFormats(TargetFormat.Msi, TargetFormat.Exe, TargetFormat.Dmg)
+            // Each system builds its own: Windows the .msi and .exe, a Mac the .dmg, Linux the .deb
+            // (and the AppImage, from the app folder: linux/make_appimage.sh).
+            targetFormats(TargetFormat.Msi, TargetFormat.Exe, TargetFormat.Dmg, TargetFormat.Deb)
             packageName = "Sonara"
             // Bumped for every installer: Windows only upgrades to a higher version.
             packageVersion = appVersion
@@ -171,6 +187,17 @@ compose.desktop {
                 packageVersion = appVersion
                 dmgPackageVersion = appVersion
                 minimumSystemVersion = "12.0"
+            }
+            linux {
+                iconFile.set(project.file("src/main/resources/icon.png"))
+                // The menu entry is sonara-Sonara.desktop; LinuxDesktop.WINDOW_CLASS must match it.
+                packageName = "sonara"
+                packageVersion = appVersion
+                debPackageVersion = appVersion
+                debMaintainer = "Sonara <sonara@users.noreply.github.com>"
+                menuGroup = "AudioVideo;Audio;Player"
+                appCategory = "sound"
+                shortcut = true
             }
         }
     }

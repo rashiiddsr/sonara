@@ -24,7 +24,7 @@ data class Account(
 
 /**
  * The account on disk, encrypted for this user: with DPAPI on Windows, with a key in the login
- * keychain on a Mac. It is a live Google session.
+ * keychain on a Mac, with a key in the desktop's keyring on Linux. It is a live Google session.
  */
 object AccountStore {
     private val file = File(AppFiles.root, "session.bin")
@@ -32,18 +32,30 @@ object AccountStore {
     fun load(): Account? =
         runCatching {
             val sealed = file.readBytes()
-            val plain = if (Os.isMac) MacKeychain.open(sealed) else Crypt32Util.cryptUnprotectData(sealed)
+            val plain =
+                when {
+                    Os.isMac -> MacKeychain.open(sealed)
+                    Os.isLinux -> LinuxKeyring.open(sealed)
+                    else -> Crypt32Util.cryptUnprotectData(sealed)
+                }
             Json.decodeFromString<Account>(String(plain, Charsets.UTF_8))
         }.getOrNull()
 
     fun save(account: Account) {
         val plain = Json.encodeToString(account).toByteArray(Charsets.UTF_8)
-        file.writeBytes(if (Os.isMac) MacKeychain.seal(plain) else Crypt32Util.cryptProtectData(plain))
+        file.writeBytes(
+            when {
+                Os.isMac -> MacKeychain.seal(plain)
+                Os.isLinux -> LinuxKeyring.seal(plain)
+                else -> Crypt32Util.cryptProtectData(plain)
+            },
+        )
     }
 
     fun clear() {
         file.delete()
         if (Os.isMac) MacKeychain.forget()
+        if (Os.isLinux) LinuxKeyring.forget()
         EdgeSignIn.forgetBrowserProfile()
     }
 

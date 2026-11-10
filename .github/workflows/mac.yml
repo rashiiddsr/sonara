@@ -1,7 +1,8 @@
 name: macOS app
 
-# Builds Sonara's .dmg on a Mac (Apple Silicon): jpackage only packages for the system it runs on.
-# The AI translator's key is built in (secrets/translator.sealed), so nothing needs setting up.
+# Builds Sonara's .dmg on a Mac, once on Apple Silicon and once on Intel: jpackage only packages
+# for the system it runs on. The AI translator's key is built in (secrets/translator.sealed), so
+# nothing needs setting up.
 on:
   workflow_dispatch:
   push:
@@ -13,9 +14,17 @@ concurrency:
 
 jobs:
   dmg:
-    name: Build .dmg
-    runs-on: macos-latest
+    name: Build .dmg (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            arch: arm64
+          - runner: macos-15-intel
+            arch: intel
     steps:
       - uses: actions/checkout@v4
 
@@ -29,17 +38,19 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build the .dmg
-        run: ./gradlew --console=plain -p desktop packageDmg
+        run: |
+          uname -m
+          ./gradlew --console=plain -p desktop packageDmg
 
-      - name: Name it for Apple Silicon
+      - name: Name it for its Mac
         run: |
           cd desktop/build/compose/binaries/main/dmg
-          for f in Sonara-*.dmg; do mv "$f" "${f%.dmg}-mac-arm64.dmg"; done
+          for f in Sonara-*.dmg; do mv "$f" "${f%.dmg}-mac-${{ matrix.arch }}.dmg"; done
           ls -la
 
       - name: Upload the .dmg
         uses: actions/upload-artifact@v4
         with:
-          name: Sonara-macOS
+          name: Sonara-macOS-${{ matrix.arch }}
           path: desktop/build/compose/binaries/main/dmg/*.dmg
           if-no-files-found: error

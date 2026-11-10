@@ -33,7 +33,7 @@ import java.net.ServerSocket
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-class NoBrowserException : Exception("Microsoft Edge or Google Chrome is needed to sign in")
+class NoBrowserException : Exception("Google Chrome, Microsoft Edge, Brave, Vivaldi or Chromium is needed to sign in")
 
 /**
  * Google's sign-in page, in a window of the default browser (Edge when it can't be used), on a
@@ -53,12 +53,26 @@ object EdgeSignIn {
             "a:String(yt.config_.SESSION_INDEX||0)}:null)"
 
     private val profile = File(AppFiles.root, "signin-browser")
+
+    // A browser from the Snap Store may only write under its own folder: the profile goes there.
+    private fun snapProfile(name: String) = File(System.getProperty("user.home"), "snap/$name/common/sonara-signin")
     private val http = OkHttpClient()
     private val json = Json { ignoreUnknownKeys = true }
 
     fun forgetBrowserProfile() {
         profile.deleteRecursively()
+        if (Os.isLinux) linuxBrowsers.flatMap { it.second }.forEach { snapProfile(it).deleteRecursively() }
     }
+
+    /** Linux: browsers by the menu entry the system names them by, and the commands they go by. */
+    private val linuxBrowsers =
+        listOf(
+            "google-chrome" to listOf("google-chrome-stable", "google-chrome"),
+            "microsoft-edge" to listOf("microsoft-edge-stable", "microsoft-edge"),
+            "brave" to listOf("brave-browser", "brave"),
+            "vivaldi" to listOf("vivaldi-stable", "vivaldi"),
+            "chromium" to listOf("chromium", "chromium-browser"),
+        )
 
     /** Chromium browsers that can be asked for cookies, by the id the system knows them under. */
     private val browsers =
@@ -78,7 +92,21 @@ object EdgeSignIn {
             )
         }
 
-    private fun defaultBrowserId(): String? = if (Os.isMac) macDefaultBrowserId() else windowsDefaultBrowserId()
+    private fun defaultBrowserId(): String? =
+        when {
+            Os.isMac -> macDefaultBrowserId()
+            Os.isLinux -> linuxDefaultBrowserId()
+            else -> windowsDefaultBrowserId()
+        }
+
+    /** The menu entry Linux opens links with, google-chrome.desktop say. */
+    private fun linuxDefaultBrowserId(): String? =
+        runCatching {
+            val process = ProcessBuilder("xdg-settings", "get", "default-web-browser").redirectError(ProcessBuilder.Redirect.DISCARD).start()
+            val id = process.inputStream.bufferedReader().readText().trim()
+            process.waitFor()
+            id.takeIf { it.isNotEmpty() }
+        }.getOrNull()
 
     private fun windowsDefaultBrowserId(): String? =
         runCatching {
@@ -104,6 +132,7 @@ object EdgeSignIn {
 
     /** The default browser when it can be used (Firefox and Safari can't), otherwise any that is installed. */
     private fun findBrowser(): String? {
+        if (Os.isLinux) return findLinuxBrowser()
         val roots =
             if (Os.isMac) {
                 listOf("/Applications", System.getProperty("user.home") + "/Applications")
@@ -115,6 +144,34 @@ object EdgeSignIn {
         return (listOfNotNull(preferred) + browsers).firstNotNullOfOrNull { installed(it.second) }
     }
 
+    /** On Linux, browsers are commands: on the PATH, in the usual places, or from the Snap Store last. */
+    private fun findLinuxBrowser(): String? {
+        val path = System.getenv("PATH").orEmpty().split(':').filter { it.startsWith("/") && !it.startsWith("/snap") }
+        val folders = (path + listOf("/usr/bin", "/usr/local/bin", "/opt/google/chrome", "/opt/microsoft/msedge", "/opt/brave.com/brave", "/opt/vivaldi")).distinct()
+        val default = defaultBrowserId()
+        val ordered = linuxBrowsers.sortedBy { (id, _) -> if (default?.contains(id, ignoreCase = true) == true) 0 else 1 }
+        fun found(folders: List<String>) =
+            ordered.firstNotNullOfOrNull { (_, names) ->
+                names.firstNotNullOfOrNull { name -> folders.map { File(it, name) }.firstOrNull { it.isFile && it.canExecute() }?.path }
+            }
+        return found(folders) ?: found(listOf("/snap/bin"))
+    }
+
+    /**
+     * Where the sign-in browser keeps its profile. A browser from the Snap Store, or a small script
+     * that starts one (Ubuntu's chromium-browser is such a script), gets one under its own folder.
+     */
+    private fun profileFor(browser: String): File {
+        if (browser.startsWith("/snap/")) return snapProfile(File(browser).name)
+        val file = File(browser)
+        val script = if (file.length() in 1..SCRIPT_BYTES) runCatching { file.readText() }.getOrNull() else null
+        val snap = script?.let { SNAP_COMMAND.find(it)?.groupValues?.get(1) }
+        return if (snap != null) snapProfile(snap) else profile
+    }
+
+    private const val SCRIPT_BYTES = 16_384L
+    private val SNAP_COMMAND = Regex("""/snap/bin/([a-z0-9-]+)""")
+
     /** The signed-in account, or null when the user closed the window first. */
     suspend fun signIn(): Account? =
         withContext(Dispatchers.IO) {
@@ -123,7 +180,7 @@ object EdgeSignIn {
             val arguments =
                 listOf(
                     browser,
-                    "--user-data-dir=${profile.path}",
+                    "--user-data-dir=${profileFor(browser).path}",
                     "--remote-debugging-port=$port",
                     "--no-first-run",
                     "--no-default-browser-check",

@@ -10,7 +10,8 @@ import java.io.File
 /**
  * Where the app keeps its data. On Windows: %LOCALAPPDATA%\Sonara\data, since the folder above it
  * is where the per-user installer puts the program, and what it replaces on an update. On a Mac:
- * ~/Library/Application Support/Sonara, where Mac apps keep theirs.
+ * ~/Library/Application Support/Sonara, where Mac apps keep theirs. On Linux: the user's data
+ * folder ($XDG_DATA_HOME, ~/.local/share by default), in Sonara.
  */
 object AppFiles {
     private val home = System.getProperty("user.home")
@@ -23,6 +24,9 @@ object AppFiles {
     val root: File =
         if (Os.isMac) {
             File(home, "Library/Application Support/Sonara").apply { mkdirs() }
+        } else if (Os.isLinux) {
+            val data = System.getenv("XDG_DATA_HOME")?.takeIf { it.startsWith("/") } ?: "$home/.local/share"
+            File(data, "Sonara").apply { mkdirs() }
         } else {
             val install = File(System.getenv("LOCALAPPDATA") ?: home, "Sonara")
             File(install, "data").apply {
