@@ -169,6 +169,8 @@ compose.desktop {
             modules(
                 "java.instrument", "java.management", "java.naming", "java.net.http", "java.sql",
                 "jdk.crypto.ec", "jdk.unsupported", "java.desktop",
+                // D-Bus (Linux media controls) signs in to the bus with the user's id.
+                "jdk.security.auth",
             )
             windows {
                 iconFile.set(project.file("icon.ico"))
