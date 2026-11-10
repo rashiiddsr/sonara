@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Launch screen: the SONARA pulse sends out its echoes on the night background. -->
+    <style name="Theme.Metrolist" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowMinWidthMinor">100%</item>
+        <item name="android:windowMinWidthMajor">100%</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/ic_launcher_background</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_pulse</item>
+        <item name="android:windowSplashScreenAnimationDuration">800</item>
+    </style>
+
+    <!-- Widget Theme for Android 12+ with Dynamic Colors -->
+    <style name="Theme.Widget.Metrolist" parent="@android:style/Theme.DeviceDefault.DayNight" />
+</resources>

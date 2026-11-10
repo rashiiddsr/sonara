@@ -1,0 +1,649 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="local_history">Local</string>
+    <string name="remote_history">Remote</string>
+
+    <string name="charts">Charts</string>
+    <string name="mixes">Mixes</string>
+    <string name="back_button_desc">Back</string>
+    <string name="top_music_videos">Top music videos</string>
+    <string name="trending">Trending</string>
+    <string name="parsed_from_link">Parsed from link</string>
+
+    <string name="weeks">Weeks</string>
+    <string name="months">Months</string>
+    <string name="years">Years</string>
+    <string name="continuous">Continuous</string>
+
+    <string name="liked">Liked</string>
+    <string name="offline">Downloaded</string>
+    <string name="my_top">My Top</string>
+    <string name="weekly_most_playlist_name">Weekly Most</string>
+    <string name="monthly_most_playlist_name">Monthly Most</string>
+    <string name="cached_playlist">Cached</string>
+    <string name="uploaded_playlist">Uploaded</string>
+    <string name="filter_uploaded">Uploaded</string>
+    <string name="sync_playlist">Sync playlist</string>
+    <string name="sync_disabled">Sync disabled</string>
+    <string name="allows_for_sync_witch_youtube">NOTE: This option enables syncing with YouTube Music and CANNOT be changed later</string>
+
+    <string name="and">and</string>
+    <string name="generating_image">Generating image…</string>
+    <string name="please_wait">Please wait</string>
+    <string name="cancel">Cancel</string>
+    <string name="enable">Enable</string>
+    <string name="share_lyrics">Share lyrics</string>
+    <string name="share_as_text">Share as text</string>
+    <string name="share_as_image">Share as image</string>
+    <string name="utaloom_lyrics_signature">made with Sonara</string>
+    <string name="max_selection_limit">Maximum selection limit reached</string>
+    <string name="share_selected">Share selected</string>
+    <string name="customize_colors">Customize colors</string>
+    <string name="text_color">Text color</string>
+    <string name="secondary_text_color">Secondary text color</string>
+    <string name="background_color">Background color</string>
+
+    <string name="remove_from_cache">Remove from cache</string>
+
+    <!-- Artist about section -->
+    <string name="about_artist">About</string>
+    <string name="show_more">Show more</string>
+    <string name="show_less">Show less</string>
+    <string name="artist_page_settings">Artist page</string>
+    <string name="show_artist_description">Show artist description</string>
+    <string name="show_artist_subscriber_count">Show subscriber count</string>
+    <string name="show_artist_monthly_listeners">Show monthly listeners</string>
+
+    <!-- Menu descriptions -->
+    <string name="download_playlist_desc">Download all songs for offline playback</string>
+    <string name="remove_download_playlist_desc">Remove all downloaded songs from this playlist</string>
+    <string name="download_in_progress_desc">A download is in progress</string>
+    <string name="share_playlist_desc">Share this playlist with others</string>
+    <string name="delete_playlist_desc">Remove this playlist permanently</string>
+    <string name="sync_playlist_desc">Sync this playlist with YouTube Music</string>
+    <string name="copy_link">Copy link</string>
+    <string name="select">Select all</string>
+    <string name="like_all">Like all</string>
+    <string name="dislike_all">Dislike all</string>
+    <string name="sort_by_last_updated">Date updated</string>
+    <string name="link_copied">Link copied to clipboard</string>
+    <string name="starting_radio">Starting radio…</string>
+    <string name="now_playing">Now Playing</string>
+
+    <string name="lyrics">Lyrics</string>
+    <string name="close">Close</string>
+    <string name="hide_player_thumbnail">Hide player thumbnail</string>
+    <string name="hide_player_thumbnail_desc">Replace the album artwork with the app logo in the player</string>
+    <string name="crop_album_art">Crop album art</string>
+    <string name="crop_album_art_desc">Force a square aspect ratio by cropping video thumbnails</string>
+
+    <string name="already_in_playlist">Already in playlist: </string>
+
+    <plurals name="n_time">
+        <item quantity="one">%d time</item>
+        <item quantity="other">%d times</item>
+    </plurals>
+
+    <string name="seek_forward_dynamic">+%1$d seconds forward</string>
+    <string name="seek_backward_dynamic">-%1$d seconds backward</string>
+    <string name="seek_seconds_addup">Progressive seek</string>
+    <string name="seek_seconds_addup_description">When enabled, adds 5 extra seconds incrementally with each seek</string>
+
+    <string name="similar_content">Similar content</string>
+
+    <string name="player_background_style">Player background style</string>
+    <string name="player_background_solid">Solid</string>
+    <string name="follow_theme">Follow theme</string>
+    <string name="gradient">Gradient</string>
+    <string name="new_player_design">New player design</string>
+    <string name="new_mini_player_design">New mini-player design</string>
+    <string name="player_background_blur">Blur</string>
+    <string name="player_buttons_style">Player button colors</string>
+    <string name="default_style">Default</string>
+    <string name="primary_color_style">Primary color</string>
+    <string name="tertiary_color_style">Tertiary color</string>
+    <string name="display_density">Display density</string>
+    <string name="restart">Restart</string>
+    <string name="restart_required">Restart required!</string>
+    <string name="density_restart_message">The display density change will take effect after restarting the app. Restart now?</string>
+    <string name="wavy">Wavy</string>
+    <string name="enable_swipe_thumbnail">Enable swipe to change song</string>
+    <string name="swipe_song_to_add">Swipe left to add the song to the queue, or right to play it next</string>
+    <string name="swipe_song_to_remove">Swipe to remove the song from the playlist</string>
+    <string name="lyrics_click_change">Change lyrics on tap</string>
+    <string name="lyrics_from_provider">Lyrics from %s</string>
+    <string name="lyrics_auto_scroll">Auto-scroll lyrics</string>
+    <string name="hide_status_bar_fullscreen">Hide status bar on fullscreen</string>
+    <string name="hide_status_bar_fullscreen_desc">Hide the status bar when lyrics fullscreen mode is active</string>
+    <string name="show_interval_indicator">Show interval indicator</string>
+    <string name="show_interval_indicator_desc">Shows a progress bar during long instrumental gaps</string>
+    <string name="respect_agent_positioning">Respect agent positioning</string>
+    <string name="respect_agent_positioning_desc">Align lyrics based on the agent role (e.g. background vocals)</string>
+    <string name="lyrics_glow_effect">Enable glowing lyrics effect</string>
+    <string name="lyrics_glow_effect_desc">Adds a glowing animation and bounce effect to the active lyric line</string>
+    <string name="lyrics_animation_style">Lyrics animation style</string>
+    <string name="lyrics_animation_none">None</string>
+    <string name="lyrics_animation_fade">Fade</string>
+    <string name="lyrics_animation_glow">Glow</string>
+    <string name="lyrics_animation_slide">Slide</string>
+    <string name="lyrics_animation_karaoke">Karaoke</string>
+    <string name="lyrics_animation_apple">Apple Music Style</string>
+    <string name="lyrics_text_size">Lyrics text size</string>
+    <string name="lyrics_line_spacing">Lyrics line spacing</string>
+    <string name="enable_lrclib_desc">Community-driven synchronized lyrics database</string>
+    <string name="enable_kugou_desc">Pulls lyrics from KuGou, a popular Chinese music platform</string>
+    <string name="youtube_music_lyrics_note">NOTE: YouTube Music lyrics will be shown automatically when no other source is available. They are usually not synchronized</string>
+    <string name="enable_better_lyrics">Enable Better Lyrics</string>
+    <string name="enable_better_lyrics_desc">Syllable-synced lyrics for any song, perfect for karaoke</string>
+    <string name="lyrics_provider_selection">Provider selection</string>
+    <string name="lyrics_provider_selection_desc">Choose which lyrics providers are enabled</string>
+    <string name="lyrics_providers">Lyrics providers</string>
+    <string name="lyrics_providers_desc">Enable providers and reorder with the arrows. Tried from top to bottom on the next lyrics fetch.</string>
+    <string name="youtube_lyrics_desc">Lyrics from YouTube Music, usually without synchronized timing</string>
+    <string name="youtube_subtitle_lyrics_desc">Timed lyrics from YouTube video subtitles</string>
+    <string name="lyrics_provider_move_up">Move %1$s up</string>
+    <string name="lyrics_provider_move_down">Move %1$s down</string>
+    <string name="auto_scroll">Re-sync</string>
+    <string name="slim">Slim</string>
+    <string name="force_bottom_navbar">Force bottom navigation bar</string>
+    <string name="slim_navbar">Slim bottom navigation bar</string>
+    <string name="auto_playlists">Auto playlists</string>
+    <string name="show_liked_playlist">Show Liked playlist</string>
+    <string name="show_downloaded_playlist">Show Downloaded playlist</string>
+    <string name="show_top_playlist">Show Top playlist</string>
+    <string name="show_cached_playlist">Show Cached playlist</string>
+    <string name="enable_song_cache">Enable song cache</string>
+    <string name="enable_song_cache_desc">Automatically cache songs for faster future playback</string>
+    <string name="show_uploaded_playlist">Show Uploaded playlist</string>
+    <string name="show_most_stats_playlists">Show Weekly and Monthly Most playlists</string>
+    <string name="show_most_stats_playlists_desc">Create and show stats-based Most playlists in Stats and Library</string>
+    <string name="shuffle_playlist_first">Shuffle playlist or album first</string>
+    <string name="shuffle_playlist_first_desc">When shuffling, play all songs from the current playlist or album before moving to similar content</string>
+    <string name="smart_shuffle">Smart shuffle</string>
+    <string name="smart_shuffle_desc">Mix recommended songs into playlists and albums while shuffling</string>
+    <string name="prevent_duplicate_tracks_in_queue">Prevent duplicate tracks in queue</string>
+    <string name="prevent_duplicate_tracks_in_queue_desc">When adding a track that\'s already in the queue, it will be moved from its previous position rather than added again</string>
+    <string name="add_to_playlist_position">Add to playlist position</string>
+    <string name="playlist_position_beginning">Beginning of playlist</string>
+    <string name="playlist_position_beginning_desc">Newly added songs appear before existing songs</string>
+    <string name="playlist_position_end">End of playlist</string>
+    <string name="playlist_position_end_desc">Newly added songs appear after existing songs</string>
+    <string name="skip_silence_desc">Fast-forward through silent parts of songs</string>
+    <string name="skip_silence_instant">Instantly skip silence</string>
+    <string name="skip_silence_instant_desc">Jump ahead during silent moments instead of speeding up playback</string>
+
+    <string name="advanced_login">Log in with token</string>
+    <string name="token_hidden">Tap to show token</string>
+    <string name="token_shown">Tap again to copy or edit</string>
+    <string name="token_adv_login_description">This is an ADVANCED login method. Instead of using the web portal, you can enter or update your login token directly. This can be useful for signing in across multiple devices quickly. Tokens in an unrecognized format will be rejected</string>
+    <string name="yt_sync">Auto-sync with account</string>
+    <string name="more_content">More content</string>
+
+    <string name="sort_ascending">Sort ascending</string>
+    <string name="sort_descending">Sort descending</string>
+
+    <!-- Playlist cover edit -->
+    <string name="edit_playlist_cover">Edit playlist cover</string>
+    <string name="edit_playlist_cover_note">NOTE: Your account must be linked to a phone number and verified on YouTube Music to change the playlist cover</string>
+    <string name="edit_playlist_cover_note_wait">After selecting an image, please wait a moment for the new cover to appear in your playlist</string>
+    <string name="choose_from_library">Choose from library</string>
+    <string name="remove_custom_image">Remove custom image</string>
+
+    <!-- General -->
+    <string name="general">General</string>
+    <string name="proxy">Proxy</string>
+    <string name="default_lib_chips">Change default library chip</string>
+    <string name="set_quick_picks">Set quick picks</string>
+    <string name="last_song_listened">Based on the last song you listened to</string>
+    <string name="app_language">App language</string>
+    <string name="lyrics_provider_priority">Lyrics provider priority</string>
+    <string name="lyrics_provider_priority_desc">Drag to reorder providers by preference. Higher position means higher priority</string>
+    <string name="experimental_lyrics">Experimental lyrics</string>
+    <string name="experimental_lyrics_desc">Enable the new experimental lyrics component with enhanced animations and performance</string>
+    <string name="experimental_lyrics_beta_title">Experimental feature</string>
+    <string name="experimental_lyrics_beta_message">The new lyrics component is currently in development and may contain bugs. Are you sure you want to enable it?</string>
+    <string name="config_proxy">Configure proxy</string>
+    <string name="proxy_username">Proxy username</string>
+    <string name="proxy_password">Proxy password</string>
+    <string name="enable_authentication">Enable authentication</string>
+
+    <string name="auto_radio_queue">Auto radio queue</string>
+    <string name="auto_radio_queue_desc">Automatically create a radio queue when playing a song from search or home</string>
+    <string name="enable_similar_content">Enable similar content</string>
+    <string name="similar_content_desc">Automatically adds more similar songs when the end of the queue is reached</string>
+    <string name="persistent_shuffle_title">Persistent shuffle</string>
+    <string name="persistent_shuffle_desc">Keep shuffle enabled when starting new songs or playlists</string>
+    <string name="remember_shuffle_and_repeat">Remember shuffle and repeat</string>
+    <string name="remember_shuffle_and_repeat_desc">Remember shuffle and repeat settings when the app is restarted</string>
+
+    <string name="import_online">Import an M3U playlist</string>
+    <string name="import_run_in_background">Run in background</string>
+    <string name="playlist_unavailable">Playlist unavailable</string>
+    <string name="playlist_created_locally">YouTube sync failed. Playlist created locally.</string>
+    <string name="playlist_add_local_to_synced_note">NOTE: Adding local songs to synced or remote playlists is not supported. Any other combination is valid</string>
+    <string name="export_playlist">Export playlist</string>
+    <string name="export_as_csv">Export as CSV</string>
+    <string name="export_as_m3u">Export as M3U</string>
+    <string name="export_success">Playlist exported successfully</string>
+    <string name="export_failed">Failed to export playlist</string>
+    <string name="export_option_share">Share</string>
+    <string name="export_option_save">Save to Documents</string>
+
+    <string name="auto_download_on_like">Auto-download on like</string>
+    <string name="auto_download_on_like_desc">Automatically download songs when you like them</string>
+
+    <string name="swipe_sensitivity">Mini-player swipe sensitivity</string>
+    <string name="sensitivity_percentage">%1$d%%</string>
+
+    <string name="clear_song_cache_dialog">Are you sure you want to clear all cached songs?</string>
+    <string name="clear_image_cache_dialog">Are you sure you want to clear all cached images?</string>
+    <string name="clear_downloads_dialog">Are you sure you want to clear all downloads?</string>
+
+    <string name="disable">Disable</string>
+
+    <string name="not_logged_in_youtube">Not logged in to YouTube</string>
+
+    <string name="default_links">Open supported links</string>
+    <string name="open_app_settings_error">Couldn\'t open the app settings</string>
+
+    <string name="github_releases_url">https://github.com/MetrolistGroup/Metrolist/releases</string>
+
+    <string name="all_time">All time</string>
+    <string name="past_24_hours">Past 24 hours</string>
+    <string name="past_week">Past week</string>
+    <string name="past_month">Past month</string>
+    <string name="past_year">Past year</string>
+    <string name="top_length">My Top list length</string>
+    <string name="history_duration">History duration</string>
+    <string name="information">Information</string>
+    <string name="description">Description</string>
+    <string name="views">Views</string>
+    <string name="likes">Likes</string>
+
+    <string name="dislikes">Dislikes</string>
+    <string name="subscribe">Subscribe</string>
+    <string name="subscribed">Subscribed</string>
+    <plurals name="seconds">
+        <item quantity="one">1 second</item>
+        <item quantity="other">%d seconds</item>
+    </plurals>
+
+    <!-- Sleep timer -->
+    <string name="set_as_default">Set as default</string>
+    <string name="sleep_timer_default_set">Sleep timer default set to %d minutes</string>
+    <string name="enable_automatic_sleeptimer">Enable automatic sleep timer</string>
+    <string name="sleeptimer_description">Automatically starts the sleep timer at a set time using the default duration</string>
+    <string name="sleep_timer_repeat_description">Set a recurring day and time for the sleep timer to activate automatically</string>
+    <string name="sleep_timer_repeat">Repeat</string>
+    <string name="sleep_timer_daily">Daily</string>
+    <string name="sleep_timer_weekdays">Monday to Friday</string>
+    <string name="sleep_timer_weekdays_weekends">Weekdays / Weekends</string>
+    <string name="sleep_timer_weekends">Saturday to Sunday</string>
+    <string name="sleep_timer_custom">Custom</string>
+    <string name="sleep_timer_start_time">Start time</string>
+    <string name="sleep_timer_end_time">End time</string>
+    <string name="sleep_timer_monday">Monday</string>
+    <string name="sleep_timer_tuesday">Tuesday</string>
+    <string name="sleep_timer_wednesday">Wednesday</string>
+    <string name="sleep_timer_thursday">Thursday</string>
+    <string name="sleep_timer_friday">Friday</string>
+    <string name="sleep_timer_saturday">Saturday</string>
+    <string name="sleep_timer_sunday">Sunday</string>
+    <string name="sleep_timer_stop_after_current_song_title">Stop at the end of current song</string>
+    <string name="sleep_timer_stop_after_current_song_description">Waits for the currently playing song to finish before stopping</string>
+    <string name="sleep_timer_fade_out_title">Fade out</string>
+    <string name="sleep_timer_fade_out_description">Gradually fades out the volume in the final minute</string>
+
+    <!-- Player Settings -->
+    <string name="disable_load_more_when_repeat_all">Disable auto-load in repeat all mode</string>
+    <string name="disable_load_more_when_repeat_all_desc">Don\'t automatically load more songs or similar content when repeat all is enabled</string>
+    <string name="pause_music_when_media_is_muted">Pause music when media is muted</string>
+    <string name="resume_on_bluetooth_connect">Resume on Bluetooth connection</string>
+    <string name="keep_screen_on_when_player_is_expanded">Keep screen on when player is expanded</string>
+
+    <string name="crossfade">Crossfade</string>
+    <string name="crossfade_desc">Fades out the current song as the next one fades in</string>
+    <string name="crossfade_duration">Crossfade duration</string>
+    <string name="crossfade_gapless">Disable for gapless albums</string>
+    <string name="crossfade_gapless_desc">Skip crossfade for albums designed to play without gaps</string>
+
+    <!-- Lyrics Offset Settings -->
+    <string name="lyrics_offset">Lyrics offset</string>
+
+    <!-- Material 3 Settings Sections -->
+    <string name="settings_section_ui">Interface</string>
+    <string name="settings_section_privacy">Privacy &amp; Security</string>
+    <string name="settings_section_player_content">Player &amp; Content</string>
+    <string name="settings_section_storage">Storage &amp; Data</string>
+    <string name="settings_section_system">System &amp; About</string>
+
+    <!-- Offload -->
+    <string name="audio_offload">Enable audio offload</string>
+    <string name="audio_offload_description">Uses the hardware audio offload path for playback. Disabling this may increase battery usage, but can help if you experience issues with playback or audio post-processing</string>
+    <string name="audio_offload_disabled_by_crossfade">Disabled because crossfade is active</string>
+
+    <!-- Varispeed -->
+    <string name="speed">Playback Speed</string>
+    <string name="varispeed">Enable varispeed</string>
+    <string name="varispeed_description">Link pitch to playback speed, resulting in tape-style speedup and slowdown effects</string>
+
+    <!-- AudioTrack Playback Parameters -->
+    <string name="audio_track_playback_params">Use hardware audio processing</string>
+    <string name="audio_track_playback_params_description">Use Android\'s AudioTrack for speed/pitch changes instead of software processing. More reliable for extreme pitch values</string>
+
+    <string name="hide_video_songs">Hide video songs</string>
+    <string name="hide_youtube_shorts">Hide YouTube Shorts</string>
+
+    <string name="details_desc">View the song\'s details</string>
+    <string name="edit_desc">Edit the title or artist</string>
+    <string name="start_radio_desc">Start a radio based on this item</string>
+    <string name="play_next_desc">Play next in the queue</string>
+    <string name="add_to_queue_desc">Add to the end of the queue</string>
+    <string name="add_to_library_desc">Save to your library</string>
+    <string name="download_desc">Download for offline playback</string>
+    <string name="add_to_playlist_desc">Add to a playlist</string>
+    <string name="refetch_desc">Refresh metadata from YouTube Music</string>
+    <string name="share_desc">Share a link to this item</string>
+    <string name="delete_desc">Permanently remove this item</string>
+    <string name="advanced_desc">Adjust the song\'s tempo and pitch</string>
+    <string name="equalizer_desc">Open the audio equalizer</string>
+    <string name="mini_player">Mini-player</string>
+    <string name="mini_player_background_style">Mini-player background style</string>
+    <string name="transparent">Transparent</string>
+    <string name="mini_player_background_not_available">Unavailable when the new mini-player design is disabled</string>
+    <string name="cache_size_warning_title">Hold on!</string>
+    <string name="cache_size_warning_message">The limit you\'ve chosen (%1$s) is smaller than what the app is currently using. Continuing may cause some cached %2$s to be removed. Proceed anyway?</string>
+    <string name="cache_size_warning_confirm">Continue</string>
+
+    <string name="lyrics_animation_style_title">Word-by-word animation style</string>
+
+    <!-- Equalizer UI -->
+    <string name="equalizer_header">Equalizer</string>
+    <string name="no_profiles">No equalizer profiles</string>
+    <string name="import_profile">Import profile</string>
+    <string name="system_equalizer">System equalizer</string>
+    <string name="system_equalizer_desc">Open Android\'s built-in equalizer</string>
+    <string name="eq_disabled">Disabled</string>
+    <string name="eq_wizard">AutoEQ Wizard</string>
+    <string name="eq_download_db">Download AutoEQ database (17 MB)</string>
+    <string name="eq_downloading">Downloading…</string>
+    <string name="import_from_file">Import from file</string>
+    <plurals name="band_count">
+        <item quantity="one">%d band</item>
+        <item quantity="other">%d bands</item>
+    </plurals>
+    <string name="delete_profile_desc">Delete profile</string>
+    <string name="delete_profile_confirmation">Are you sure you want to delete %1$s? This action cannot be undone</string>
+    <string name="error_file_read">Could not read file</string>
+    <string name="error_file_open">Failed to open file: %1$s</string>
+    <string name="import_error_title">Import error</string>
+    <string name="error_title">Error</string>
+    <string name="error_eq_apply_failed">Failed to apply equalizer profile: %1$s</string>
+
+    <!-- EQ Wizard -->
+    <string name="wizard_select_model">Select Model</string>
+    <string name="wizard_select_profiles">Select Profiles</string>
+    <string name="wizard_search_model_hint">Search for your headphone or earphone model</string>
+    <string name="wizard_model_name">Model Name</string>
+    <string name="wizard_model_placeholder">e.g., Sony WH-1000XM4, Bose QuietComfort 45</string>
+    <string name="wizard_no_models">No models found</string>
+    <string name="wizard_multiple_variants">Multiple variants available</string>
+    <string name="wizard_select_eq_profiles">Select EQ profiles for %s</string>
+    <string name="wizard_save_profiles">Save Profiles</string>
+
+    <!-- Hardcoded strings -->
+    <string name="your_daily_discover">Your daily discover</string>
+    <string name="plays">plays</string>
+    <string name="progress_percent">Progress %s%%</string>
+    <string name="failed_to_create_image">Failed to create image: %s</string>
+    <string name="copied_title">Title copied</string>
+    <string name="copied_artist">Artist copied</string>
+    <string name="error_playing">Playback error</string>
+    <string name="failed_to_parse_proxy">Failed to parse proxy URL</string>
+
+    <!-- Playback errors -->
+    <string name="error_playback_failed">Playback failed</string>
+    <string name="error_no_internet_connection">No internet connection</string>
+    <string name="error_offline_playback">You’re offline. Connect to the internet, or play a track downloaded for offline use.</string>
+    <string name="error_explicit_login_recommended">Explicit playback works better with a logged-in account.</string>
+    <string name="error_job_cancelled">The video is not available for playback. Try again or skip to the next song.</string>
+    <string name="error_episode_save">Failed to save episode</string>
+    <string name="error_episode_remove">Failed to remove episode</string>
+    <string name="error_podcast_subscribe">Failed to subscribe to podcast</string>
+    <string name="error_podcast_unsubscribe">Failed to unsubscribe from podcast</string>
+
+    <!-- Widget strings -->
+    <string name="album_art">Album art</string>
+    <string name="no_song_playing">No song playing</string>
+    <string name="tap_to_open">Tap to open Metrolist</string>
+    <string name="previous">Previous</string>
+    <string name="play_pause">Play/Pause</string>
+    <string name="player_pause">Pause</string>
+    <string name="next">Next</string>
+    <string name="like">Like</string>
+    <string name="not_playing">No song playing</string>
+    <string name="tap_to_play">Tap to open Metrolist</string>
+    <string name="widget_description">Music player widget with playback controls</string>
+    <string name="turntable_widget_description">Circular music widget with play and like controls</string>
+    <string name="widget_music_player">Music Player</string>
+    <string name="widget_turntable">Turntable</string>
+
+    <string name="copy">Copy</string>
+    <string name="change">Change</string>
+    <string name="copied_to_clipboard">Copied to clipboard</string>
+
+    <!-- Crash Handler -->
+    <string name="crash_title">App crashed</string>
+    <string name="crash_description">An unexpected error occurred. Please share the crash report to help us fix the issue</string>
+    <string name="crash_share_logs">Share logs</string>
+    <string name="crash_share_title">Share crash report</string>
+    <string name="crash_report_subject">Metrolist crash report</string>
+    <string name="crash_close">Close</string>
+    <string name="crash_no_log">No crash log available</string>
+
+    <!-- Theme Palette Names -->
+    <string name="palette_dynamic">Dynamic</string>
+    <string name="palette_utaloom_coral">Utaloom Coral</string>
+    <string name="palette_crimson">Crimson</string>
+    <string name="palette_rose">Rose</string>
+    <string name="palette_purple">Purple</string>
+    <string name="palette_deep_purple">Deep Purple</string>
+    <string name="palette_indigo">Indigo</string>
+    <string name="palette_blue">Blue</string>
+    <string name="palette_sky_blue">Sky Blue</string>
+    <string name="palette_cyan">Cyan</string>
+    <string name="palette_teal">Teal</string>
+    <string name="palette_green">Green</string>
+    <string name="palette_light_green">Light Green</string>
+    <string name="palette_lime">Lime</string>
+    <string name="palette_yellow">Yellow</string>
+    <string name="palette_amber">Amber</string>
+    <string name="palette_orange">Orange</string>
+    <string name="palette_deep_orange">Deep Orange</string>
+    <string name="palette_brown">Brown</string>
+    <string name="palette_grey">Grey</string>
+    <string name="palette_blue_grey">Blue Grey</string>
+
+    <!-- Theme Content Descriptions -->
+    <string name="cd_back">Back</string>
+    <string name="cd_pure_black_mode">Pure black mode</string>
+    <string name="cd_light_mode">Light mode</string>
+    <string name="cd_dark_mode">Dark mode</string>
+    <string name="cd_system_mode">System mode</string>
+    <string name="cd_palette_item">%1$s palette</string>
+    <string name="play_all">Play all</string>
+    <string name="enable_high_refresh_rate">Enable high refresh rate</string>
+    <string name="enable_high_refresh_rate_desc">Forces the display to run at its highest supported refresh rate (e.g. 120Hz)</string>
+    <string name="enable_landscape_scaling">Landscape Scaling</string>
+    <string name="enable_landscape_scaling_desc">Scale UI in landscape mode for larger screens</string>
+
+    <string name="continue_action">Continue</string>
+    <string name="importing_playlist">Importing playlist…</string>
+
+    <string name="speed_dial">Speed dial</string>
+    <string name="pin_to_speed_dial">Pin to speed dial</string>
+    <string name="unpin_from_speed_dial">Unpin from speed dial</string>
+    <string name="pin">Pin</string>
+    <string name="unpin">Unpin</string>
+    <string name="randomize_home_order">Randomize home screen order</string>
+    <string name="randomize_home_order_desc">Randomly reorder home screen sections using weighted priorities</string>
+
+    <!-- Daily Discover -->
+    <string name="daily_discover_sounds_like">Sounds like %1$s</string>
+    <string name="daily_discover_because_you_listen_to">Because you listen to %1$s</string>
+    <string name="daily_discover_similar_to">Similar to %1$s</string>
+    <string name="daily_discover_based_on">Based on %1$s</string>
+    <string name="daily_discover_for_fans_of">For fans of %1$s</string>
+    <string name="from_the_community">From the community</string>
+
+    <!-- Logout dialog -->
+    <string name="logout_dialog_title">Keep library data?</string>
+    <string name="logout_dialog_message">Do you want to keep your playlists and library data? Downloaded songs will always be kept</string>
+    <string name="logout_keep">Keep</string>
+    <string name="logout_clear">Clear</string>
+
+    <!-- Credits / About Screen -->
+    <string name="credits_lead_developer">Lead developer</string>
+    <string name="credits_collaborator">Collaborator</string>
+    <string name="credits_collaborators_section">Collaborators</string>
+    <string name="credits_license_name">GNU General Public License v3.0</string>
+    <string name="credits_license_desc">Free, open-source software. You may use, study, share, and improve it</string>
+    <string name="credits_telegram">Telegram channel</string>
+    <string name="credits_view_repo">View repository</string>
+    <string name="buy_mo_a_coffee">Buy me a coffee!</string>
+    <string name="community_and_info">Community &amp; Info</string>
+    <string name="metrolist">METROLIST</string>
+    <string name="wanna_play_favorite_song">Want to play their favorite song?</string>
+    <string name="yeah">Yeah!</string>
+    <string name="stands_with_palestine">This project stands with Palestine 🇵🇸</string>
+
+    <!-- Podcasts -->
+    <string name="filter_podcasts">Podcasts</string>
+    <string name="view_podcast">View podcast</string>
+    <string name="podcast_channels">Podcast channels</string>
+    <string name="latest_episodes">Latest episodes</string>
+    <string name="your_shows">Your shows</string>
+    <string name="new_episodes">New episodes</string>
+    <string name="episodes_for_later">Episodes for later</string>
+    <string name="save_episode_for_later">Save for later</string>
+    <string name="save_episode_for_later_desc">Add to your Episodes for later playlist</string>
+    <string name="remove_episode_from_saved">Remove from saved</string>
+    <string name="subscribe_to_podcast">Save podcast to library</string>
+    <plurals name="n_episode">
+        <item quantity="one">%d episode</item>
+        <item quantity="other">%d episodes</item>
+    </plurals>
+    <string name="filter_episodes">Episodes</string>
+    <string name="filter_profiles">Profiles</string>
+    <string name="filter_channels">Channels</string>
+    <string name="auto_playlist">Auto playlist</string>
+
+    <!-- Restore confirmation dialog -->
+    <string name="restore_confirm_title">Restore backup?</string>
+    <string name="restore_confirm_message">This will restore your app data from the selected backup</string>
+    <string name="restore_account_warning">The following account information will be restored and preserved:</string>
+    <string name="restore">Restore</string>
+    <string name="restore_database_incompatible">Cannot restore backup: database version incompatible. Your current data has been preserved.</string>
+    <string name="checking_previous_account">Checking for previous account…</string>
+    <string name="no_account_found">No account found</string>
+
+    <!-- Upload songs -->
+    <string name="upload_songs">Upload songs</string>
+    <string name="uploading">Uploading…</string>
+    <string name="upload_progress">%1$d of %2$d</string>
+    <string name="upload_complete">Upload complete</string>
+    <string name="upload_failed">Upload failed</string>
+    <string name="upload_file_too_large">File too large (maximum 300MB)</string>
+    <string name="upload_unsupported_format">Unsupported format. Supported formats: MP3, M4A, WMA, FLAC, OGG</string>
+    <string name="delete_uploaded_song">Delete uploaded song</string>
+    <string name="delete_uploaded_song_confirm">Are you sure you want to delete this uploaded song? This action cannot be undone</string>
+    <string name="delete_uploaded_song_success">Uploaded song deleted</string>
+    <string name="delete_uploaded_song_failed">Failed to delete uploaded song</string>
+    <string name="delete_uploaded_songs">Delete uploaded songs</string>
+    <string name="delete_uploaded_songs_confirm">Are you sure you want to delete %1$d uploaded songs? This action cannot be undone</string>
+    <string name="deleted_n_songs">Deleted %1$d songs</string>
+    <string name="deleting">Deleting…</string>
+
+    <string name="android_auto_target_playlist">Quick-add destination</string>
+    <string name="android_auto_target_playlist_not_set">No playlist selected. Choose one in Android Auto settings</string>
+
+    <!-- Stats time transfer -->
+    <string name="time_transfer_title">Time transfer</string>
+    <string name="time_transfer_warning">WARNING: This action cannot be undone once completed. Create a backup before proceeding. Only songs with at least one registered play are eligible</string>
+    <string name="time_transfer_source_song">Source song</string>
+    <string name="time_transfer_target_song">Target song</string>
+    <string name="time_transfer_listen_time_label">Listen time: </string>
+    <string name="time_transfer_convert">Convert</string>
+    <string name="song_dropdown_more_results">Keep typing to narrow results (%d more)</string>
+
+    <!-- Player and Audio Settings -->
+    <string name="autoplay">Autoplay</string>
+    <string name="autoplay_desc">Automatically play the next song when the current one ends</string>
+
+    <!-- Accessibility -->
+    <string name="back">Back</string>
+    <string name="clear_search">Clear search</string>
+    <string name="switch_to_list_view">Switch to list view</string>
+    <string name="switch_to_grid_view">Switch to grid view</string>
+
+    <!-- Loudness Level -->
+    <string name="loudness_level">Loudness level</string>
+    <string name="loudness_level_aggressive">Aggressive (-7 dB)</string>
+    <string name="loudness_level_loud">Loud (-11 dB)</string>
+    <string name="loudness_level_balanced">Balanced (-14 dB)</string>
+    <string name="loudness_level_quiet">Quiet (-19 dB)</string>
+    <string name="widget_playlists">Playlists</string>
+    <string name="widget_playlists_description">Playlist shortcuts with mini-player controls</string>
+    <string name="choose_something_below">Choose something below</string>
+    <string name="choose_youtube_channel">Choose a YouTube channel</string>
+    <string name="choose_youtube_channel_description">This Google account has multiple channels. Pick the one you want to use.</string>
+    <string name="switch_youtube_channel">Switch YouTube channel</string>
+    <string name="youtube_channels_failed">Couldn\'t retrieve the YouTube channels for this account. Please try again.</string>
+    <string name="authentication_data_extraction_failed">Couldn\'t read the YouTube Music session. Please try again.</string>
+    <string name="login_failed_with_error">Login failed: %1$s</string>
+    <string name="stream_client">Stream client</string>
+    <string name="format_player_hash">Player hash</string>
+    <string name="format_cipher_support_added">Cipher support added</string>
+    <string name="not_applicable">N/A</string>
+
+    <!-- Stream sources -->
+    <string name="enable_dynamic_icon">Dynamic icon colors</string>
+    <string name="enable_dynamic_icon_desc">Use dynamic theme colors for the app icon. When disabled, the icon uses solid colors.</string>
+    <string name="stream_sources">Stream sources</string>
+    <string name="stream_source_order">Stream order</string>
+    <string name="stream_source_web_clients">Web clients</string>
+    <string name="stream_source_native_clients">Native clients</string>
+    <string name="stream_source_creator_clients">Creator clients</string>
+    <string name="stream_source_web_remix">WEB_REMIX</string>
+    <string name="stream_source_web_remix_desc">Primary client. Authenticated; covers most tracks.</string>
+    <string name="stream_source_tvhtml5">TVHTML5</string>
+    <string name="stream_source_tvhtml5_desc">TV client. Reliable fallback.</string>
+    <string name="stream_source_visionos">visionOS</string>
+    <string name="stream_source_visionos_desc">Apple Vision. No throttle gate; very reliable.</string>
+    <string name="stream_source_android_vr">Android VR</string>
+    <string name="stream_source_android_vr_desc">Android VR clients (all versions).</string>
+    <string name="stream_source_web_creator">WEB_CREATOR</string>
+    <string name="stream_source_web_creator_desc">Creator web client.</string>
+    <string name="top_result">Top result</string>
+    <string name="other">Other</string>
+    <string name="utaloom_name" translatable="false">Utaloom Android</string>
+    <string name="utaloom_tap_to_open" translatable="false">Tap to open Sonara</string>
+    <string name="utaloom_crash_report_subject" translatable="false">Sonara crash report</string>
+    <string name="utaloom_maintainer" translatable="false">Utaloom maintainer</string>
+    <string name="utaloom_attribution" translatable="false">Based on open-source work from Metrolist. Source attribution does not imply affiliation or endorsement.</string>
+    <string name="utaloom_independent_notice" translatable="false">Independently maintained by Rashid. Not affiliated with Metro Group, Metrolist, or MetrolistGroup.</string>
+    <string name="utaloom_desktop_app" translatable="false">Utaloom for desktop</string>
+    <string name="utaloom_report_issue" translatable="false">Report an Android issue</string>
+    <string name="offline_mode">Offline mode</string>
+    <string name="offline_mode_desc">Browse and play downloaded music and episodes only. Streaming, downloads and YouTube sync are paused.</string>
+    <string name="offline_mode_empty">No downloaded music or episodes. Turn off offline mode to download some first.</string>
+    <string name="disable_offline_mode">Turn off offline mode</string>
+    <string name="offline_mode_playback_error">Offline mode is enabled. Play a downloaded track, or turn off offline mode to stream.</string>
+    <string name="save_queue_as_playlist">Save queue as playlist</string>
+    <string name="queue_saved_as_playlist">Queue saved as %1$s</string>
+    <string name="queue_save_failed">Could not save queue as playlist. Please try again.</string>
+    <string name="download_quality">Download quality</string>
+    <string name="download_quality_desc">Quality for new downloads, independent of streaming. Existing downloads keep their quality.</string>
+    <string name="wifi_only_downloads">Wi-Fi / unmetered downloads only</string>
+    <string name="wifi_only_downloads_desc">Pause on metered connections and resume on Wi-Fi or another unmetered network. Metered Wi-Fi is excluded.</string>
+</resources>

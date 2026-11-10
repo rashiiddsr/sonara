@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SONARA Design Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page-bg: #f4f4f2;
+    --page-ink: #16171a;
+    --page-muted: #5c6068;
+    --page-card: #ffffff;
+    --page-line: #e3e3df;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page-bg: #0d0e10;
+      --page-ink: #eef0f3;
+      --page-muted: #9aa0aa;
+      --page-card: #16181c;
+      --page-line: #26292f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page-bg: #0d0e10;
+    --page-ink: #eef0f3;
+    --page-muted: #9aa0aa;
+    --page-card: #16181c;
+    --page-line: #26292f;
+  }
+
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--page-bg);
+    color: var(--page-ink);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.5;
+    padding: 32px 16px 64px;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; }
+  header.page h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+  header.page p { color: var(--page-muted); max-width: 760px; margin-top: 8px; }
+  .now {
+    margin-top: 20px; padding: 16px 18px; border: 1px solid var(--page-line); border-radius: 14px;
+    background: var(--page-card); display: grid; gap: 6px; max-width: 760px; font-size: 14px;
+  }
+  .now b { font-weight: 700; }
+
+  section.direction {
+    margin-top: 48px; padding: 24px; border-radius: 24px; background: var(--page-card);
+    border: 1px solid var(--page-line);
+  }
+  .dir-head { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  .dir-head .logo { width: 72px; height: 72px; flex: none; }
+  .dir-head h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+  .dir-head .tag { color: var(--page-muted); font-size: 14px; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 18px; }
+  .fact { border: 1px solid var(--page-line); border-radius: 12px; padding: 12px 14px; font-size: 13px; }
+  .fact h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--page-muted); margin-bottom: 6px; }
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sw { width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(127,127,127,.25); }
+  .phones { display: flex; gap: 20px; margin-top: 22px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; }
+
+  /* ---------- Phone frame (colours come from each direction) ---------- */
+  .phone {
+    flex: none; width: 300px; height: 620px; border-radius: 36px; padding: 10px; scroll-snap-align: start;
+    background: #050505; box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  }
+  .screen {
+    height: 100%; border-radius: 28px; overflow: hidden; position: relative;
+    background: var(--bg); color: var(--ink); font-family: var(--font); display: flex; flex-direction: column;
+  }
+  .status { height: 26px; display: flex; justify-content: space-between; padding: 6px 18px 0; font-size: 11px; font-weight: 600; color: var(--ink); opacity: .9; }
+  .body { flex: 1; overflow: hidden; padding: 6px 16px 0; }
+  .top { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 12px; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 19px; letter-spacing: -0.02em; }
+  .brand svg { width: 26px; height: 26px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; font-size: 12px; font-weight: 800; }
+  .chips { display: flex; gap: 6px; margin-bottom: 14px; overflow: hidden; }
+  .chip { padding: 6px 12px; border-radius: 999px; background: var(--surface-2); font-size: 12px; font-weight: 600; white-space: nowrap; color: var(--ink); }
+  .chip.on { background: var(--accent); color: var(--on-accent); }
+  .h { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; margin: 4px 0 10px; }
+  .cards { display: flex; gap: 10px; margin-bottom: 16px; }
+  .card { width: 112px; flex: none; }
+  .card .art { width: 112px; height: 112px; border-radius: var(--r-art); }
+  .card .t { font-size: 12px; font-weight: 700; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .s { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+  .row .art { width: 44px; height: 44px; border-radius: var(--r-thumb); flex: none; display: grid; place-items: center; }
+  .row .meta { flex: 1; min-width: 0; }
+  .row .t { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .s { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .t.live { color: var(--accent); }
+  .ico { width: 20px; height: 20px; flex: none; fill: currentColor; }
+  .muted { color: var(--muted); }
+  .mini {
+    margin: 0 10px 8px; padding: 8px; border-radius: var(--r-card); background: var(--surface-2);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .mini .art { width: 38px; height: 38px; border-radius: var(--r-thumb); }
+  .mini .meta { flex: 1; min-width: 0; font-size: 12px; }
+  .mini .meta b { display: block; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mini .progress { height: 2px; background: var(--line); border-radius: 2px; margin-top: 4px; }
+  .mini .progress i { display: block; width: 38%; height: 100%; background: var(--accent); border-radius: 2px; }
+  .nav { display: flex; justify-content: space-around; padding: 8px 0 14px; border-top: 1px solid var(--line); background: var(--bg); }
+  .nav div { display: grid; justify-items: center; gap: 2px; font-size: 10px; font-weight: 600; color: var(--muted); }
+  .nav div.on { color: var(--ink); }
+  .nav div.on .pill { background: var(--accent-soft); }
+  .nav .pill { padding: 3px 14px; border-radius: 999px; display: grid; place-items: center; }
+  .nav .pill svg { width: 22px; height: 22px; fill: currentColor; }
+
+  /* Player */
+  .player { flex: 1; display: flex; flex-direction: column; padding: 8px 20px 18px; position: relative; }
+  .player .glow { position: absolute; inset: 0; background: var(--player-bg); }
+  .player > * { position: relative; }
+  .player .bar { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; color: var(--ink); opacity: .85; margin-bottom: 14px; }
+  .player .big { width: 100%; aspect-ratio: 1; border-radius: var(--r-big); box-shadow: 0 18px 40px rgba(0,0,0,.35); }
+  .player .info { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
+  .player .info b { font-size: 19px; font-weight: 800; letter-spacing: -0.01em; display: block; }
+  .player .info span { font-size: 13px; color: var(--muted); }
+  .slider { margin-top: 16px; height: 4px; border-radius: 4px; background: var(--line); position: relative; }
+  .slider i { position: absolute; left: 0; top: 0; bottom: 0; width: 42%; background: var(--ink); border-radius: 4px; }
+  .slider i::after { content: ""; position: absolute; right: -6px; top: -4px; width: 12px; height: 12px; border-radius: 50%; background: var(--ink); }
+  .times { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 6px; }
+  .controls { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+  .controls svg { width: 26px; height: 26px; fill: var(--ink); }
+  .controls .play { width: 64px; height: 64px; border-radius: 50%; background: var(--play-bg); display: grid; place-items: center; box-shadow: var(--play-shadow); }
+  .controls .play svg { width: 30px; height: 30px; fill: var(--on-play); }
+  .lyrics-peek { margin-top: 16px; padding: 12px 14px; border-radius: var(--r-card); background: var(--lyric-bg); font-size: 13px; font-weight: 700; line-height: 1.45; }
+  .lyrics-peek small { display: block; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .7; margin-bottom: 4px; }
+  .lyrics-peek .dim { opacity: .5; }
+
+  /* ---------- Direction A: Sonar Teal ---------- */
+  .dir-a {
+    --font: "Plus Jakarta Sans", system-ui, sans-serif;
+    --bg: #0a0b0d; --surface: #131518; --surface-2: #1b1e22; --line: #2a2e34;
+    --ink: #f3f5f7; --muted: #9aa1ac; --accent: #2ee6c5; --on-accent: #04201b; --accent-soft: rgba(46,230,197,.16);
+    --r-art: 14px; --r-thumb: 10px; --r-card: 16px; --r-big: 22px;
+    --player-bg: radial-gradient(120% 70% at 50% 0%, #6a3b8f 0%, #2a1840 45%, #0a0b0d 85%);
+    --play-bg: #2ee6c5; --on-play: #04201b; --play-shadow: 0 8px 24px rgba(46,230,197,.35);
+    --lyric-bg: rgba(255,255,255,.08);
+  }
+  /* ---------- Direction B: Midnight Violet ---------- */
+  .dir-b {
+    --font: "Manrope", system-ui, sans-serif;
+    --bg: #0c0b11; --surface: #15131d; --surface-2: #1e1b29; --line: #2d2a3b;
+    --ink: #f4f2fb; --muted: #a39fb6; --accent: #a594ff; --on-accent: #160f3a; --accent-soft: rgba(165,148,255,.18);
+    --r-art: 18px; --r-thumb: 12px; --r-card: 20px; --r-big: 28px;
+    --player-bg: linear-gradient(180deg, #2c5f8f 0%, #1a2a4a 40%, #0c0b11 85%);
+    --play-bg: linear-gradient(135deg, #a594ff, #ff8fb8); --on-play: #160f3a; --play-shadow: 0 8px 26px rgba(165,148,255,.4);
+    --lyric-bg: rgba(165,148,255,.14);
+  }
+  /* ---------- Direction C: Echo Light ---------- */
+  .dir-c {
+    --font: "Inter", system-ui, sans-serif;
+    --bg: #f6f5f1; --surface: #ffffff; --surface-2: #ecebe6; --line: #dcdad3;
+    --ink: #141414; --muted: #6b6a66; --accent: #1f5bff; --on-accent: #ffffff; --accent-soft: rgba(31,91,255,.12);
+    --r-art: 12px; --r-thumb: 8px; --r-card: 14px; --r-big: 18px;
+    --player-bg: linear-gradient(180deg, #f2d7c6 0%, #f6f5f1 70%);
+    --play-bg: #141414; --on-play: #ffffff; --play-shadow: 0 8px 20px rgba(0,0,0,.2);
+    --lyric-bg: #ffffff;
+  }
+
+  /* Placeholder covers (shapes only, no real artwork) */
+  .c1 { background: linear-gradient(135deg, #ff7a59, #ffb347); }
+  .c2 { background: linear-gradient(135deg, #3a7bd5, #00d2ff); }
+  .c3 { background: radial-gradient(circle at 30% 30%, #f6d365, #fda085 60%, #b2456e); }
+  .c4 { background: linear-gradient(160deg, #134e5e, #71b280); }
+  .c5 { background: linear-gradient(135deg, #8e2de2, #4a00e0); }
+  .c6 { background: conic-gradient(from 200deg, #f857a6, #ff5858, #f857a6); }
+  .c7 { background: linear-gradient(135deg, #232526, #414345); }
+  .liked { background: linear-gradient(135deg, #f26db5, #9f6cf2); }
+  .downs { background: linear-gradient(135deg, #4d94ff, #5cd6c8); }
+  .eps { background: linear-gradient(135deg, #f7a072, #b98bf2); }
+  .row .art svg { width: 22px; height: 22px; fill: #fff; }
+
+  .compare { margin-top: 48px; }
+  .compare table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--page-card); border-radius: 16px; overflow: hidden; }
+  .compare th, .compare td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--page-line); vertical-align: top; }
+  .compare th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--page-muted); }
+  .table-scroll { overflow-x: auto; }
+  footer.page { margin-top: 40px; color: var(--page-muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="page">
+    <h1>SONARA: tiga arah tampilan</h1>
+    <p>Contoh layar Home, Library dan Player untuk memilih arah desain sebelum diterapkan ke aplikasi. Cover lagu di sini hanya bentuk warna pengganti; di aplikasi tetap cover asli.</p>
+    <div class="now">
+      <div><b>Sekarang di SONARA:</b> huruf bawaan Android (Roboto), aksen biru #4D94FF di atas latar biru tua, ikon dari dua keluarga (Material Symbols dan Material Icons lama), logo lingkaran biru dengan busur seperti ikon Wi-Fi.</div>
+      <div><b>Yang sama di ketiga arah:</b> satu keluarga ikon (garis, terisi saat aktif), latar lebih netral, warna player diambil dari cover lagu, logo baru bertema sonar yang jelas musik.</div>
+    </div>
+  </header>
+
+  <!-- ===================== Direction A ===================== -->
+  <section class="direction dir-a" aria-labelledby="a-title">
+    <div class="dir-head">
+      <svg class="logo" viewBox="0 0 72 72" aria-hidden="true">
+        <rect width="72" height="72" rx="18" fill="#0a0b0d"/>
+        <path d="M24 22 L24 50 L46 36 Z" fill="#2ee6c5" stroke="#2ee6c5" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M51 27 a13 13 0 0 1 0 18" fill="none" stroke="#2ee6c5" stroke-width="3.5" stroke-linecap="round" opacity=".75"/>
+        <path d="M56 21 a21 21 0 0 1 0 30" fill="none" stroke="#2ee6c5" stroke-width="3.5" stroke-linecap="round" opacity=".4"/>
+      </svg>
+      <div>
+        <h2 id="a-title">A. Sonar Teal</h2>
+        <div class="tag">Gelap netral, satu aksen toska yang tajam. Logo: tombol play yang memancarkan gema.</div>
+      </div>
+    </div>
+    <div class="facts">
+      <div class="fact"><h3>Huruf</h3>Plus Jakarta Sans (desainer Indonesia, lisensi OFL). Judul tebal 800, rapat.</div>
+      <div class="fact"><h3>Warna</h3><div class="swatches"><span class="sw" style="background:#0a0b0d"></span><span class="sw" style="background:#1b1e22"></span><span class="sw" style="background:#2ee6c5"></span><span class="sw" style="background:#f3f5f7"></span><span class="sw" style="background:#9aa1ac"></span></div></div>
+      <div class="fact"><h3>Bentuk</h3>Sudut sedang (10–22 px). Tegas, modern, mirip aplikasi musik masa kini.</div>
+      <div class="fact"><h3>Kesan</h3>Bersih, sporty, warna khas yang mudah diingat tanpa meniru merek lain.</div>
+    </div>
+    <div class="phones">
+      <!-- Home -->
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span>5G 87%</span></div>
+        <div class="body">
+          <div class="top"><div class="brand"><svg viewBox="0 0 72 72"><rect width="72" height="72" rx="18" fill="#1b1e22"/><path d="M24 22 L24 50 L46 36 Z" fill="#2ee6c5"/><path d="M51 27 a13 13 0 0 1 0 18" fill="none" stroke="#2ee6c5" stroke-width="4" stroke-linecap="round" opacity=".75"/></svg>SONARA</div><div class="avatar">R</div></div>
+          <div class="chips"><span class="chip on">Semua</span><span class="chip">Santai</span><span class="chip">Semangat</span><span class="chip">Fokus</span></div>
+          <div class="h">Pilihan cepat</div>
+          <div class="row"><div class="art c1"></div><div class="meta"><div class="t">Senja di Kota</div><div class="s">Lagu · Arunika</div></div><svg class="ico muted" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></div>
+          <div class="row"><div class="art c2"></div><div class="meta"><div class="t live">Laut Biru</div><div class="s">Lagu · Nadaku</div></div><svg class="ico muted" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></div>
+          <div class="row"><div class="art c3"></div><div class="meta"><div class="t">Rumah Kita</div><div class="s">Lagu · Sore Hari</div></div><svg class="ico muted" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></div>
+          <div class="h" style="margin-top:10px">Mix untukmu</div>
+          <div class="cards"><div class="card"><div class="art c4"></div><div class="t">Mix Harian 1</div><div class="s">Arunika, Nadaku</div></div><div class="card"><div class="art c5"></div><div class="t">Mix Harian 2</div><div class="s">Sore Hari, Lintas</div></div></div>
+        </div>
+        <div class="mini"><div class="art c2"></div><div class="meta"><b>Laut Biru</b><span class="muted">Nadaku</span><div class="progress"><i></i></div></div><svg class="ico" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></div>
+        <div class="nav"><div class="on"><span class="pill"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg></span>Beranda</div><div><span class="pill"><svg viewBox="0 0 24 24"><path d="M10.5 4a6.5 6.5 0 0 1 5.2 10.4l4 4-1.4 1.4-4-4A6.5 6.5 0 1 1 10.5 4zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z"/></svg></span>Cari</div><div><span class="pill"><svg viewBox="0 0 24 24"><path d="M4 5h2v14H4zm4 0h2v14H8zm4.2.6 1.9-.6 4.7 13.3-1.9.7z"/></svg></span>Koleksi</div></div>
+      </div></div>
+      <!-- Library -->
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span>5G 87%</span></div>
+        <div class="body">
+          <div class="top"><div class="brand" style="font-size:22px">Koleksi</div><svg class="ico" viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg></div>
+          <div class="chips"><span class="chip on">Playlist</span><span class="chip">Album</span><span class="chip">Podcast</span><span class="chip">Di perangkat</span></div>
+          <div class="row"><div class="art liked"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></div><div class="meta"><div class="t">Lagu yang disukai</div><div class="s">Playlist otomatis · 128 lagu</div></div></div>
+          <div class="row"><div class="art downs"><svg viewBox="0 0 24 24"><path d="M11 4h2v9l3-3 1.4 1.4L12 16.8 6.6 11.4 8 10l3 3zM5 18h14v2H5z"/></svg></div><div class="meta"><div class="t">Download</div><div class="s">Playlist otomatis · 42 lagu</div></div></div>
+          <div class="row"><div class="art c6"></div><div class="meta"><div class="t">Teman Perjalanan</div><div class="s">Playlist · Rashid · 37 lagu</div></div></div>
+          <div class="row"><div class="art c4"></div><div class="meta"><div class="t">Akustik Sore</div><div class="s">Playlist · 224 lagu</div></div></div>
+          <div class="row"><div class="art c5" style="border-radius:50%"></div><div class="meta"><div class="t">Lintas Generasi</div><div class="s">Artis · 233 rb pelanggan</div></div></div>
+          <div class="row"><div class="art c7"></div><div class="meta"><div class="t">Album Pertama</div><div class="s">Album · Sore Hari · 2024</div></div></div>
+        </div>
+        <div class="nav"><div><span class="pill"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg></span>Beranda</div><div><span class="pill"><svg viewBox="0 0 24 24"><path d="M10.5 4a6.5 6.5 0 0 1 5.2 10.4l4 4-1.4 1.4-4-4A6.5 6.5 0 1 1 10.5 4zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z"/></svg></span>Cari</div><div class="on"><span class="pill"><svg viewBox="0 0 24 24"><path d="M4 5h2v14H4zm4 0h2v14H8zm4.2.6 1.9-.6 4.7 13.3-1.9.7z"/></svg></span>Koleksi</div></div>
+      </div></div>
+      <!-- Player -->
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span>5G 87%</span></div>
+        <div class="player"><div class="glow"></div>
+          <div class="bar"><span>⌄</span><span>DIPUTAR DARI PILIHAN CEPAT</span><span>⋮</span></div>
+          <div class="big c5"></div>
+          <div class="info"><div><b>Lintas Waktu</b><span>Lintas Generasi</span></div><svg class="ico" viewBox="0 0 24 24" style="width:26px;height:26px;fill:#2ee6c5"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></div>
+          <div class="slider"><i></i></div><div class="times"><span>1:24</span><span>3:38</span></div>
+          <div class="controls"><svg viewBox="0 0 24 24"><path d="M4 8h10V5l4 4-4 4v-3H4zm16 8H10v3l-4-4 4-4v3h10z" opacity=".7"/></svg><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zm3 7 9-7v14z"/></svg><div class="play"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></div><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zm-1 7-9 7V5z"/></svg><svg viewBox="0 0 24 24"><path d="M17 4l3 3-3 3V8H8a3 3 0 0 0 0 6h1v2H8A5 5 0 0 1 8 6h9zm-10 16-3-3 3-3v2h9a3 3 0 0 0 0-6h-1V8h1a5 5 0 0 1 0 10H7z" opacity=".7"/></svg></div>
+          <div class="lyrics-peek"><small>Lirik</small>Kita berjalan melintasi waktu<br><span class="dim">Menyimpan cerita di setiap lagu</span></div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ===================== Direction B ===================== -->
+  <section class="direction dir-b" aria-labelledby="b-title">
+    <div class="dir-head">
+      <svg class="logo" viewBox="0 0 72 72" aria-hidden="true">
+        <defs><linearGradient id="bg-b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a594ff"/><stop offset="1" stop-color="#ff8fb8"/></linearGradient></defs>
+        <rect width="72" height="72" rx="22" fill="url(#bg-b)"/>
+        <path d="M46 24c-3-4-9-5-13-3-5 2-5 8 0 10l7 3c5 2 5 8 0 10-4 2-10 1-13-3" fill="none" stroke="#160f3a" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="52" cy="50" r="3.5" fill="#160f3a"/>
+      </svg>
+      <div>
+        <h2 id="b-title">B. Midnight Violet</h2>
+        <div class="tag">Gelap keunguan, gradasi ungu ke merah muda di tombol utama. Logo: huruf S dari gelombang suara.</div>
+      </div>
+    </div>
+    <div class="facts">
+      <div class="fact"><h3>Huruf</h3>Manrope. Lebih lembut dan bulat, terasa ramah dan premium.</div>
+      <div class="fact"><h3>Warna</h3><div class="swatches"><span class="sw" style="background:#0c0b11"></span><span class="sw" style="background:#1e1b29"></span><span class="sw" style="background:#a594ff"></span><span class="sw" style="background:#ff8fb8"></span><span class="sw" style="background:#f4f2fb"></span></div></div>
+      <div class="fact"><h3>Bentuk</h3>Sudut besar (12–28 px), kartu lembut, tombol play bergradasi.</div>
+      <div class="fact"><h3>Kesan</h3>Malam, santai, ekspresif. Paling berbeda dari aplikasi musik lain.</div>
+    </div>
+    <div class="phones">
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span>5G 87%</span></div>
+        <div class="body">
+          <div class="top"><div class="brand"><svg viewBox="0 0 72 72"><defs><linearGradient id="bgb2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a594ff"/><stop offset="1" stop-color="#ff8fb8"/></linearGradient></defs><rect width="72" height="72" rx="22" fill="url(#bgb2)"/><path d="M46 24c-3-4-9-5-13-3-5 2-5 8 0 10l7 3c5 2 5 8 0 10-4 2-10 1-13-3" fill="none" stroke="#160f3a" stroke-width="6" stroke-linecap="round"/></svg>SONARA</div><div class="avatar">R</div></div>
+          <div class="chips"><span class="chip on">Semua</span><span class="chip">Santai</span><span class="chip">Semangat</span><span class="chip">Fokus</span></div>
+          <div class="h">Pilihan cepat</div>
+          <div class="row"><div class="art c1"></div><div class="meta"><div class="t">Senja di Kota</div><div class="s">Lagu · Arunika</div></div><svg class="ico muted" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></div>
+          <div class="row"><div class="art c2"></div><div class="meta"><div class="t live">Laut Biru</div><div class="s">Lagu · Nadaku</div></div><svg class="ico muted" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></div>
+          <div class="row"><div class="art c3"></div><div class="meta"><div class="t">Rumah Kita</div><div class="s">Lagu · Sore Hari</div></div><svg class="ico muted" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></div>
+          <div class="h" style="margin-top:10px">Mix untukmu</div>
+          <div class="cards"><div class="card"><div class="art c4"></div><div class="t">Mix Harian 1</div><div class="s">Arunika, Nadaku</div></div><div class="card"><div class="art c5"></div><div class="t">Mix Harian 2</div><div class="s">Sore Hari, Lintas</div></div></div>
+        </div>
+        <div class="mini"><div class="art c2"></div><div class="meta"><b>Laut Biru</b><span class="muted">Nadaku</span><div class="progress"><i></i></div></div><svg class="ico" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></div>
+        <div class="nav"><div class="on"><span class="pill"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg></span>Beranda</div><div><span class="pill"><svg viewBox="0 0 24 24"><path d="M10.5 4a6.5 6.5 0 0 1 5.2 10.4l4 4-1.4 1.4-4-4A6.5 6.5 0 1 1 10.5 4zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z"/></svg></span>Cari</div><div><span class="pill"><svg viewBox="0 0 24 24"><path d="M4 5h2v14H4zm4 0h2v14H8zm4.2.6 1.9-.6 4.7 13.3-1.9.7z"/></svg></span>Koleksi</div></div>
+      </div></div>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span>5G 87%</span></div>
+        <div class="body">
+          <div class="top"><div class="brand" style="font-size:22px">Koleksi</div><svg class="ico" viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg></div>
+          <div class="chips"><span class="chip on">Playlist</span><span class="chip">Album</span><span class="chip">Podcast</span><span class="chip">Di perangkat</span></div>
+          <div class="row"><div class="art liked"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></div><div class="meta"><div class="t">Lagu yang disukai</div><div class="s">Playlist otomatis · 128 lagu</div></div></div>
+          <div class="row"><div class="art downs"><svg viewBox="0 0 24 24"><path d="M11 4h2v9l3-3 1.4 1.4L12 16.8 6.6 11.4 8 10l3 3zM5 18h14v2H5z"/></svg></div><div class="meta"><div class="t">Download</div><div class="s">Playlist otomatis · 42 lagu</div></div></div>
+          <div class="row"><div class="art eps"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zm-6 9h2a4 4 0 0 0 8 0h2a6 6 0 0 1-5 5.9V21h-2v-3.1A6 6 0 0 1 6 12z"/></svg></div><div class="meta"><div class="t">Episode baru</div><div class="s">Playlist otomatis</div></div></div>
+          <div class="row"><div class="art c6"></div><div class="meta"><div class="t">Teman Perjalanan</div><div class="s">Playlist · Rashid · 37 lagu</div></div></div>
+          <div class="row"><div class="art c4"></div><div class="meta"><div class="t">Akustik Sore</div><div class="s">Playlist · 224 lagu</div></div></div>
+          <div class="row"><div class="art c7"></div><div class="meta"><div class="t">Album Pertama</div><div class="s">Album · Sore Hari · 2024</div></div></div>
+        </div>
+        <div class="nav"><div><span class="pill"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg></span>Beranda</div><div><span class="pill"><svg viewBox="0 0 24 24"><path d="M10.5 4a6.5 6.5 0 0 1 5.2 10.4l4 4-1.4 1.4-4-4A6.5 6.5 0 1 1 10.5 4zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z"/></svg></span>Cari</div><div class="on"><span class="pill"><svg viewBox="0 0 24 24"><path d="M4 5h2v14H4zm4 0h2v14H8zm4.2.6 1.9-.6 4.7 13.3-1.9.7z"/></svg></span>Koleksi</div></div>
+      </div></div>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span>5G 87%</span></div>
+        <div class="player"><div class="glow"></div>
+          <div class="bar"><span>⌄</span><span>DIPUTAR DARI PILIHAN CEPAT</span><span>⋮</span></div>
+          <div class="big c2"></div>
+          <div class="info"><div><b>Laut Biru</b><span>Nadaku</span></div><svg class="ico" viewBox="0 0 24 24" style="width:26px;height:26px;fill:#ff8fb8"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></div>
+          <div class="slider"><i></i></div><div class="times"><span>1:24</span><span>3:38</span></div>
+          <div class="controls"><svg viewBox="0 0 24 24"><path d="M4 8h10V5l4 4-4 4v-3H4zm16 8H10v3l-4-4 4-4v3h10z" opacity=".7"/></svg><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zm3 7 9-7v14z"/></svg><div class="play"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></div><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zm-1 7-9 7V5z"/></svg><svg viewBox="0 0 24 24"><path d="M17 4l3 3-3 3V8H8a3 3 0 0 0 0 6h1v2H8A5 5 0 0 1 8 6h9zm-10 16-3-3 3-3v2h9a3 3 0 0 0 0-6h-1V8h1a5 5 0 0 1 0 10H7z" opacity=".7"/></svg></div>
+          <div class="lyrics-peek"><small>Lirik</small>Ombak membawa namamu pulang<br><span class="dim">Ke pantai yang dulu kita kenang</span></div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ===================== Direction C ===================== -->
+  <section class="direction dir-c" aria-labelledby="c-title">
+    <div class="dir-head">
+      <svg class="logo" viewBox="0 0 72 72" aria-hidden="true">
+        <rect width="72" height="72" rx="16" fill="#141414"/>
+        <rect x="17" y="30" width="5" height="12" rx="2.5" fill="#fff"/>
+        <rect x="26" y="22" width="5" height="28" rx="2.5" fill="#fff"/>
+        <rect x="35" y="16" width="5" height="40" rx="2.5" fill="#1f5bff"/>
+        <rect x="44" y="24" width="5" height="24" rx="2.5" fill="#fff"/>
+        <rect x="53" y="31" width="5" height="10" rx="2.5" fill="#fff"/>
+      </svg>
+      <div>
+        <h2 id="c-title">C. Echo Light</h2>
+        <div class="tag">Terang dan hangat seperti kertas, tinta hitam, satu biru kobalt. Logo: gelombang suara dengan denyut di tengah.</div>
+      </div>
+    </div>
+    <div class="facts">
+      <div class="fact"><h3>Huruf</h3>Inter. Netral dan sangat jelas dibaca, gaya editorial.</div>
+      <div class="fact"><h3>Warna</h3><div class="swatches"><span class="sw" style="background:#f6f5f1"></span><span class="sw" style="background:#ffffff"></span><span class="sw" style="background:#141414"></span><span class="sw" style="background:#1f5bff"></span><span class="sw" style="background:#6b6a66"></span></div></div>
+      <div class="fact"><h3>Bentuk</h3>Sudut kecil (8–18 px), banyak ruang putih, garis tipis.</div>
+      <div class="fact"><h3>Kesan</h3>Tenang dan rapi seperti majalah. Tema gelap tetap tersedia untuk malam.</div>
+    </div>
+    <div class="phones">
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span>5G 87%</span></div>
+        <div class="body">
+          <div class="top"><div class="brand"><svg viewBox="0 0 72 72"><rect width="72" height="72" rx="16" fill="#141414"/><rect x="17" y="30" width="5" height="12" rx="2.5" fill="#fff"/><rect x="26" y="22" width="5" height="28" rx="2.5" fill="#fff"/><rect x="35" y="16" width="5" height="40" rx="2.5" fill="#1f5bff"/><rect x="44" y="24" width="5" height="24" rx="2.5" fill="#fff"/><rect x="53" y="31" width="5" height="10" rx="2.5" fill="#fff"/></svg>SONARA</div><div class="avatar">R</div></div>
+          <div class="chips"><span class="chip on">Semua</span><span class="chip">Santai</span><span class="chip">Semangat</span><span class="chip">Fokus</span></div>
+          <div class="h">Pilihan cepat</div>
+          <div class="row"><div class="art c1"></div><div class="meta"><div class="t">Senja di Kota</div><div class="s">Lagu · Arunika</div></div><svg class="ico muted" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></div>
+          <div class="row"><div class="art c2"></div><div class="meta"><div class="t live">Laut Biru</div><div class="s">Lagu · Nadaku</div></div><svg class="ico muted" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></div>
+          <div class="row"><div class="art c3"></div><div class="meta"><div class="t">Rumah Kita</div><div class="s">Lagu · Sore Hari</div></div><svg class="ico muted" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></div>
+          <div class="h" style="margin-top:10px">Mix untukmu</div>
+          <div class="cards"><div class="card"><div class="art c4"></div><div class="t">Mix Harian 1</div><div class="s">Arunika, Nadaku</div></div><div class="card"><div class="art c5"></div><div class="t">Mix Harian 2</div><div class="s">Sore Hari, Lintas</div></div></div>
+        </div>
+        <div class="mini"><div class="art c2"></div><div class="meta"><b>Laut Biru</b><span class="muted">Nadaku</span><div class="progress"><i></i></div></div><svg class="ico" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></div>
+        <div class="nav"><div class="on"><span class="pill"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg></span>Beranda</div><div><span class="pill"><svg viewBox="0 0 24 24"><path d="M10.5 4a6.5 6.5 0 0 1 5.2 10.4l4 4-1.4 1.4-4-4A6.5 6.5 0 1 1 10.5 4zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z"/></svg></span>Cari</div><div><span class="pill"><svg viewBox="0 0 24 24"><path d="M4 5h2v14H4zm4 0h2v14H8zm4.2.6 1.9-.6 4.7 13.3-1.9.7z"/></svg></span>Koleksi</div></div>
+      </div></div>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span>5G 87%</span></div>
+        <div class="body">
+          <div class="top"><div class="brand" style="font-size:22px">Koleksi</div><svg class="ico" viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg></div>
+          <div class="chips"><span class="chip on">Playlist</span><span class="chip">Album</span><span class="chip">Podcast</span><span class="chip">Di perangkat</span></div>
+          <div class="row"><div class="art liked"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></div><div class="meta"><div class="t">Lagu yang disukai</div><div class="s">Playlist otomatis · 128 lagu</div></div></div>
+          <div class="row"><div class="art downs"><svg viewBox="0 0 24 24"><path d="M11 4h2v9l3-3 1.4 1.4L12 16.8 6.6 11.4 8 10l3 3zM5 18h14v2H5z"/></svg></div><div class="meta"><div class="t">Download</div><div class="s">Playlist otomatis · 42 lagu</div></div></div>
+          <div class="row"><div class="art c6"></div><div class="meta"><div class="t">Teman Perjalanan</div><div class="s">Playlist · Rashid · 37 lagu</div></div></div>
+          <div class="row"><div class="art c4"></div><div class="meta"><div class="t">Akustik Sore</div><div class="s">Playlist · 224 lagu</div></div></div>
+          <div class="row"><div class="art c5" style="border-radius:50%"></div><div class="meta"><div class="t">Lintas Generasi</div><div class="s">Artis · 233 rb pelanggan</div></div></div>
+          <div class="row"><div class="art c7"></div><div class="meta"><div class="t">Album Pertama</div><div class="s">Album · Sore Hari · 2024</div></div></div>
+        </div>
+        <div class="nav"><div><span class="pill"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg></span>Beranda</div><div><span class="pill"><svg viewBox="0 0 24 24"><path d="M10.5 4a6.5 6.5 0 0 1 5.2 10.4l4 4-1.4 1.4-4-4A6.5 6.5 0 1 1 10.5 4zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z"/></svg></span>Cari</div><div class="on"><span class="pill"><svg viewBox="0 0 24 24"><path d="M4 5h2v14H4zm4 0h2v14H8zm4.2.6 1.9-.6 4.7 13.3-1.9.7z"/></svg></span>Koleksi</div></div>
+      </div></div>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span>5G 87%</span></div>
+        <div class="player"><div class="glow"></div>
+          <div class="bar"><span>⌄</span><span>DIPUTAR DARI PILIHAN CEPAT</span><span>⋮</span></div>
+          <div class="big c1"></div>
+          <div class="info"><div><b>Senja di Kota</b><span>Arunika</span></div><svg class="ico" viewBox="0 0 24 24" style="width:26px;height:26px;fill:#1f5bff"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></div>
+          <div class="slider"><i></i></div><div class="times"><span>1:24</span><span>3:38</span></div>
+          <div class="controls"><svg viewBox="0 0 24 24"><path d="M4 8h10V5l4 4-4 4v-3H4zm16 8H10v3l-4-4 4-4v3h10z" opacity=".7"/></svg><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zm3 7 9-7v14z"/></svg><div class="play"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></div><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zm-1 7-9 7V5z"/></svg><svg viewBox="0 0 24 24"><path d="M17 4l3 3-3 3V8H8a3 3 0 0 0 0 6h1v2H8A5 5 0 0 1 8 6h9zm-10 16-3-3 3-3v2h9a3 3 0 0 0 0-6h-1V8h1a5 5 0 0 1 0 10H7z" opacity=".7"/></svg></div>
+          <div class="lyrics-peek"><small>Lirik</small>Lampu kota mulai menyala<br><span class="dim">Kau dan aku di persimpangan</span></div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <div class="compare">
+    <h2 style="font-size:20px;font-weight:800;margin-bottom:12px">Perbandingan singkat</h2>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th></th><th>A. Sonar Teal</th><th>B. Midnight Violet</th><th>C. Echo Light</th></tr></thead>
+      <tbody>
+        <tr><td><b>Dasar</b></td><td>Gelap netral</td><td>Gelap keunguan</td><td>Terang hangat (+ mode gelap)</td></tr>
+        <tr><td><b>Aksen</b></td><td>Toska #2EE6C5</td><td>Ungu #A594FF ke pink</td><td>Biru kobalt #1F5BFF</td></tr>
+        <tr><td><b>Huruf</b></td><td>Plus Jakarta Sans</td><td>Manrope</td><td>Inter</td></tr>
+        <tr><td><b>Logo</b></td><td>Play memancarkan gema</td><td>S dari gelombang</td><td>Gelombang suara</td></tr>
+        <tr><td><b>Cocok untuk</b></td><td>Modern, tegas, mudah dikenali</td><td>Ekspresif, santai, beda sendiri</td><td>Rapi, tenang, nyaman siang hari</td></tr>
+        <tr><td><b>Perubahan dari sekarang</b></td><td>Sedang</td><td>Besar</td><td>Besar (mode default jadi terang)</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <footer class="page">Bisa juga dicampur, misalnya huruf dan logo dari A dengan warna dari B. Semua huruf di atas berlisensi bebas (OFL) dan cocok dengan lisensi GPL-3.0 SONARA.</footer>
+</div>
+</body>
+</html>

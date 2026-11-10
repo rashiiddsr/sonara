@@ -1,0 +1,205 @@
+/**
+ * Metrolist Project (C) 2026
+ * Licensed under GPL-3.0 | See git history for contributors
+ */
+
+package com.metrolist.music.lyrics
+
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.async
+import android.content.Context
+import android.util.LruCache
+import com.metrolist.innertube.YouTube
+import com.metrolist.music.db.entities.LyricsEntity.Companion.LYRICS_NOT_FOUND
+import com.metrolist.music.models.MediaMetadata
+import com.metrolist.music.utils.NetworkConnectivityObserver
+import com.metrolist.music.utils.dataStore
+import com.metrolist.music.utils.reportException
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import timber.log.Timber
+import javax.inject.Inject
+
+private const val MAX_LYRICS_FETCH_MS = 25000L
+private const val PER_PROVIDER_TIMEOUT_MS = 8000L
+private const val PROVIDER_NONE = ""
+
+class LyricsHelper
+@Inject
+constructor(
+    @ApplicationContext private val context: Context,
+    private val networkConnectivity: NetworkConnectivityObserver,
+) {
+    val preferred =
+        context.dataStore.data
+            .map { preferences ->
+                resolveLyricsProviders(preferences)
+            }.distinctUntilChanged()
+
+    private val cache = LruCache<LyricsSearchQuery, List<LyricsResult>>(MAX_CACHE_SIZE)
+    private var currentLyricsJob: Job? = null
+
+    suspend fun getLyrics(mediaMetadata: MediaMetadata): LyricsWithProvider {
+        currentLyricsJob?.cancel()
+        if (YouTube.offlineMode) throw CancellationException("Offline mode is enabled")
+
+        val enabledProviders = context.dataStore.data
+            .map { preferences -> resolveLyricsProviders(preferences) }
+            .first()
+
+        val isNetworkAvailable = try {
+            networkConnectivity.isCurrentlyConnected()
+        } catch (e: Exception) {
+            true
+        }
+
+        if (!isNetworkAvailable) {
+            return LyricsWithProvider(LYRICS_NOT_FOUND, PROVIDER_NONE)
+        }
+
+        val result = withTimeoutOrNull(MAX_LYRICS_FETCH_MS) {
+            val cleanedTitle = LyricsUtils.cleanTitleForSearch(mediaMetadata.title)
+
+            Timber.tag("LyricsHelper").d("Starting parallel fetch for: $cleanedTitle by ${mediaMetadata.artists.joinToString { it.name }}")
+            Timber.tag("LyricsHelper").d("Enabled providers in order: ${enabledProviders.joinToString { it.name }}")
+
+            // All providers run at once; the result is still taken in the user's priority order,
+            // so a slow or failing first provider no longer delays the others by its full timeout.
+            val attempts =
+                coroutineScope {
+                    enabledProviders.map { provider ->
+                        provider to async {
+                            try {
+                                withTimeoutOrNull(PER_PROVIDER_TIMEOUT_MS) {
+                                    provider.getLyrics(
+                                        context,
+                                        mediaMetadata.id,
+                                        cleanedTitle,
+                                        mediaMetadata.artists.joinToString { it.name },
+                                        mediaMetadata.duration,
+                                        mediaMetadata.album?.title,
+                                    )
+                                }
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (e: Exception) {
+                                Timber.tag("LyricsHelper").w("${provider.name} threw: ${e.message}")
+                                null
+                            }
+                        }
+                    }.let { pending ->
+                        for ((provider, deferred) in pending) {
+                            val providerResult = deferred.await()
+                            if (providerResult != null && providerResult.isSuccess) {
+                                Timber.tag("LyricsHelper").i("Got lyrics from ${provider.name}")
+                                pending.forEach { (_, other) -> other.cancel() }
+                                val filtered = LyricsUtils.filterLyricsCreditLines(providerResult.getOrNull()!!)
+                                return@let LyricsWithProvider(filtered, provider.name)
+                            }
+                            val errorMsg = providerResult?.exceptionOrNull()?.message ?: "timeout or exception"
+                            Timber.tag("LyricsHelper").w("${provider.name} failed: $errorMsg")
+                        }
+                        null
+                    }
+                }
+            if (attempts != null) return@withTimeoutOrNull attempts
+
+            Timber.tag("LyricsHelper").w("No lyrics found after checking all providers")
+            LyricsWithProvider(LYRICS_NOT_FOUND, PROVIDER_NONE)
+        }
+
+        return result ?: LyricsWithProvider(LYRICS_NOT_FOUND, PROVIDER_NONE)
+    }
+
+    suspend fun getAllLyrics(
+        mediaId: String,
+        songTitle: String,
+        songArtists: String,
+        duration: Int,
+        album: String? = null,
+        callback: (LyricsResult) -> Unit,
+    ) {
+        currentLyricsJob?.cancel()
+        if (YouTube.offlineMode) return
+
+        val enabledProviders = resolveLyricsProviders(context.dataStore.data.first())
+        val cacheKey = LyricsSearchQuery(mediaId, songTitle, songArtists, duration, album, enabledProviders.map { it.name })
+        cache.get(cacheKey)?.let { results ->
+            results.forEach { callback(it) }
+            return
+        }
+
+        val isNetworkAvailable = try {
+            networkConnectivity.isCurrentlyConnected()
+        } catch (e: Exception) {
+            true
+        }
+
+        if (!isNetworkAvailable) return
+
+        val allResult = mutableListOf<LyricsResult>()
+        currentLyricsJob = CoroutineScope(SupervisorJob()).launch {
+            val cleanedTitle = LyricsUtils.cleanTitleForSearch(songTitle)
+
+            val callbackMutex = Any()
+
+            val jobs = enabledProviders.map { provider ->
+                launch {
+                    try {
+                        provider.getAllLyrics(context, mediaId, cleanedTitle, songArtists, duration, album) { lyrics ->
+                            val filteredLyrics = LyricsUtils.filterLyricsCreditLines(lyrics)
+                            val result = LyricsResult(provider.name, filteredLyrics)
+                            synchronized(callbackMutex) {
+                                allResult += result
+                                callback(result)
+                            }
+                        }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        reportException(e)
+                    }
+                }
+            }
+            jobs.forEach { it.join() }
+
+            cache.put(cacheKey, allResult)
+        }
+
+        currentLyricsJob?.join()
+    }
+
+    private fun resolveLyricsProviders(preferences: androidx.datastore.preferences.core.Preferences): List<LyricsProvider> =
+        LyricsProviderRegistry.getEnabledProviders(preferences)
+
+    companion object {
+        private const val MAX_CACHE_SIZE = 3
+    }
+}
+
+data class LyricsResult(
+    val providerName: String,
+    val lyrics: String,
+)
+
+data class LyricsWithProvider(
+    val lyrics: String,
+    val provider: String,
+)
+
+internal data class LyricsSearchQuery(
+    val mediaId: String,
+    val title: String,
+    val artist: String,
+    val duration: Int,
+    val album: String?,
+    val providers: List<String>,
+)

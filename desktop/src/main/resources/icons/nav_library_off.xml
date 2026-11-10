@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sonara tab icon. Original artwork (GPL-3.0). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2" android:strokeLineCap="round"
+        android:strokeLineJoin="round" android:pathData="M7,9H13A3,3 0,0 1,16,12V17A3,3 0,0 1,13,20H7A3,3 0,0 1,4,17V12A3,3 0,0 1,7,9Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M8.7,12.3L8.7,16.7L12.2,14.5Z" />
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2" android:strokeLineCap="round"
+        android:strokeLineJoin="round" android:pathData="M7.5,5H17Q20,5 20,7.5V16.5" />
+</vector>
