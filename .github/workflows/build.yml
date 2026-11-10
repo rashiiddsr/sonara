@@ -27,6 +27,14 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # The debug build signs with ~/.android/debug.keystore, which a fresh runner doesn't have.
+      # This APK is only a check; releases are signed elsewhere.
+      - name: Make a debug keystore
+        run: |
+          mkdir -p ~/.android
+          keytool -genkeypair -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey \
+            -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
       - name: Build debug APK and run unit tests
         run: ./gradlew --console=plain :app:assembleFossDebug :app:testFossDebugUnitTest
         env:
@@ -35,5 +43,5 @@ jobs:
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: er-music-debug
+          name: sonara-debug
           path: app/build/outputs/apk/foss/debug/*.apk
