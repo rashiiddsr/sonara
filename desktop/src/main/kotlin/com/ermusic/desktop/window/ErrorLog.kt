@@ -27,6 +27,7 @@ import java.time.LocalDateTime
 object ErrorLog {
     private val file = File(AppFiles.root, "logs/errors.log")
     private const val MAX_BYTES = 1_048_576L
+    private const val REPEAT_GAP_MS = 5_000L
 
     /** Errors from threads with no handler of their own (the window's thread among them). */
     fun install() {
@@ -48,11 +49,30 @@ object ErrorLog {
             }
         }
 
-    fun isDisposedWindow(error: Throwable): Boolean =
-        generateSequence(error) { it.cause }.any { it is IllegalStateException && it.message?.contains("already disposed") == true }
+    /**
+     * Compose's own words for "this window or popup has already closed", and only those: anything
+     * else, a broken icon say, is a real bug and must still be seen.
+     */
+    private val closedWindowMessages =
+        setOf(
+            "RootNodeOwner is already disposed",
+            "ComposeScene is already closed",
+            "postponeInvalidation called after ComposeScene is closed",
+        )
+
+    /** By the words alone: Compose raises these as different exception types. */
+    fun isDisposedWindow(error: Throwable): Boolean = generateSequence(error) { it.cause }.any { it.message in closedWindowMessages }
+
+    private var lastClosedWindowAt = 0L
 
     @Synchronized
     fun record(where: String, error: Throwable) {
+        // It can come once a frame for a moment; a line now and then says as much.
+        if (isDisposedWindow(error)) {
+            val now = System.currentTimeMillis()
+            if (now - lastClosedWindowAt < REPEAT_GAP_MS) return
+            lastClosedWindowAt = now
+        }
         runCatching {
             file.parentFile.mkdirs()
             // Kept small: the older half goes once it passes a megabyte.

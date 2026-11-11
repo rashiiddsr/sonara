@@ -617,7 +617,9 @@ fun ItemRow(
             addedBy?.let { avatar ->
                 Art(avatar, Modifier.padding(horizontal = Spacing.S).size(Size.IconSmall), CircleShape, pixels = 64)
             }
-            if (hovered) {
+            // Stays while its menu is open: the menu covers the row, which ends the hover, and the
+            // button (with its tooltip) shouldn't be torn down the moment it opened something.
+            if (hovered || menuAt != null) {
                 SymbolButton("more_vert", "More", tint = MaterialTheme.colorScheme.onSurfaceVariant, iconSize = Size.IconSmall) { menuAt = IntOffset(width - MENU_BUTTON_INSET, 0) }
             }
             (item as? SongItem)?.duration?.let {

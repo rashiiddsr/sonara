@@ -201,7 +201,7 @@ fun SettingsScreen(app: AppState) {
             }
             item(key = "about", contentType = "group") {
                 Group("About") {
-                    Text("Sonara 2.4.0 for ${Os.name}", style = MaterialTheme.typography.titleSmall)
+                    Text("Sonara 2.4.1 for ${Os.name}", style = MaterialTheme.typography.titleSmall)
                     Spacer(Modifier.height(Spacing.XS))
                     Text("Free software under GPL-3.0, derived from Metrolist.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }

@@ -8,6 +8,9 @@ on:
   push:
     tags: ["v*"]
 
+permissions:
+  contents: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -54,3 +57,14 @@ jobs:
           name: Sonara-macOS-${{ matrix.arch }}
           path: desktop/build/compose/binaries/main/dmg/*.dmg
           if-no-files-found: error
+
+      # On a version tag the .dmg goes straight onto that release; the APK and the .msi are
+      # added from the owner's PC.
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          gh release view "$tag" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1 || gh release create "$tag" -R "$GITHUB_REPOSITORY" --title "Sonara ${tag#v}" --notes "" || true
+          gh release upload "$tag" desktop/build/compose/binaries/main/dmg/*.dmg -R "$GITHUB_REPOSITORY" --clobber

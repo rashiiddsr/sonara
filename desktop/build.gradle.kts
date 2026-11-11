@@ -86,7 +86,7 @@ val fromAndroid by tasks.registering(Sync::class) {
 }
 kotlin.sourceSets["main"].kotlin.srcDir(fromAndroid)
 
-val appVersion = "2.4.0"
+val appVersion = "2.4.1"
 val ktor = "3.6.0"
 val ffmpegPresets = "1.5.14"
 

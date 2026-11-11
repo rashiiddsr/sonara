@@ -5,6 +5,7 @@
 
 package com.ermusic.desktop.ui
 
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -480,11 +481,13 @@ private fun FoundLyrics(lyrics: Lyrics, player: Player, track: Track, modifier: 
         value = emptyMap()
         if (translateOn) value = LyricsTranslator.translate(track.id, lyrics.lines.map { it.text }, language)
     }
-    val list = rememberLazyListState()
+    // All of it belongs to these lyrics: a new song starts at the top, not where the last one
+    // ended, even when its lyrics were ready and the page never showed "loading" in between.
+    val list = remember(lyrics) { LazyListState() }
     // Scrolling by hand (wheel or touchpad) holds the lyrics where they are; left alone for a
     // moment, they glide back to the line being sung, as on the phone, even between lines.
-    var lastScrollAt by remember { mutableLongStateOf(0L) }
-    var held by remember { mutableStateOf(false) }
+    var lastScrollAt by remember(lyrics) { mutableLongStateOf(0L) }
+    var held by remember(lyrics) { mutableStateOf(false) }
     var placed by remember(lyrics) { mutableStateOf(false) }
     val active by remember(lyrics) { derivedStateOf { if (lyrics.synced) lyrics.lines.indexOfLast { it.timeMs <= position.value } else -1 } }
 
@@ -501,7 +504,12 @@ private fun FoundLyrics(lyrics: Lyrics, player: Player, track: Track, modifier: 
             held = false
         }
         LaunchedEffect(active, held, lyrics) {
-            if (active < 0 || held) return@LaunchedEffect
+            if (held) return@LaunchedEffect
+            if (active < 0) {
+                // Before the first line (sought back to the start, say): the top of the lyrics.
+                if (lyrics.synced && placed) list.animateScrollToItem(0)
+                return@LaunchedEffect
+            }
             val target = active + 1
             val shown = list.layoutInfo.visibleItemsInfo.firstOrNull { it.index == target }
             when {

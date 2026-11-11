@@ -8,6 +8,9 @@ on:
   push:
     tags: ["v*"]
 
+permissions:
+  contents: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -91,6 +94,17 @@ jobs:
             out/*.deb
             out/*.AppImage
           if-no-files-found: error
+
+      # On a version tag the .deb and the AppImage go straight onto that release; the APK and
+      # the .msi are added from the owner's PC.
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          gh release view "$tag" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1 || gh release create "$tag" -R "$GITHUB_REPOSITORY" --title "Sonara ${tag#v}" --notes "" || true
+          gh release upload "$tag" out/*.deb out/*.AppImage -R "$GITHUB_REPOSITORY" --clobber
 
       - name: Upload the check
         if: always()
