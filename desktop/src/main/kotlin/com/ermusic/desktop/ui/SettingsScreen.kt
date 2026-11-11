@@ -5,6 +5,18 @@
 
 package com.ermusic.desktop.ui
 
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlin.system.exitProcess
+import java.io.File
+import java.awt.Frame
+import java.awt.FileDialog
+import com.ermusic.desktop.window.Uninstall
+import com.ermusic.desktop.window.DataChoice
+import com.ermusic.desktop.data.Backup
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -108,6 +120,10 @@ private fun <T> ChoiceRow(title: String, description: String?, options: List<Pai
 fun SettingsScreen(app: AppState) {
     var cacheBytes by remember { mutableLongStateOf(SongCache.sizeBytes()) }
     var startsAtLogin by remember { mutableStateOf(StartAtLogin.enabled()) }
+    var restoreReady by remember { mutableStateOf(false) }
+    var uninstalling by remember { mutableStateOf(false) }
+    if (restoreReady) RestoreReadyDialog(app) { restoreReady = false }
+    if (uninstalling) UninstallDialog(app) { uninstalling = false }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         ScrollingColumn(Modifier.widthIn(max = Layout.ReadingMaxWidth).fillMaxSize(), contentPadding = PaddingValues(horizontal = Spacing.L, vertical = Spacing.L)) {
             item(key = "title", contentType = "title") { Text("Settings", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.padding(start = Spacing.S, bottom = Spacing.L)) }
@@ -190,6 +206,20 @@ fun SettingsScreen(app: AppState) {
                     SettingRow("Downloads", songCount(Downloads.tracks.size)) {
                         OutlinedButton(onClick = { Downloads.tracks.toList().forEach { Downloads.remove(it.id) } }, enabled = Downloads.tracks.isNotEmpty(), modifier = Modifier.handCursor()) { Text("Remove all") }
                     }
+                    SettingRow("Back up", "Settings, history, speed dial, downloads and lyrics in one file you can keep anywhere. Your sign-in isn't included.") {
+                        OutlinedButton(onClick = { backUp(app) }, modifier = Modifier.handCursor()) { Text("Back up…") }
+                    }
+                    SettingRow("Restore", "Brings back a backup. Sonara finishes restoring the next time it opens.") {
+                        OutlinedButton(onClick = { if (restore(app)) restoreReady = true }, modifier = Modifier.handCursor()) { Text("Restore…") }
+                    }
+                    SettingRow(
+                        "Uninstall Sonara",
+                        if (Os.isWindows) "Remove it from Settings → Apps. You'll be asked whether to keep your data." else "Removes Sonara. You choose whether to keep your data.",
+                    ) {
+                        OutlinedButton(onClick = { if (Os.isWindows) openAppsSettings() else uninstalling = true }, modifier = Modifier.handCursor()) {
+                            Text(if (Os.isWindows) "Open Apps" else "Uninstall…")
+                        }
+                    }
                 }
             }
             item(key = "account", contentType = "group") {
@@ -201,7 +231,7 @@ fun SettingsScreen(app: AppState) {
             }
             item(key = "about", contentType = "group") {
                 Group("About") {
-                    Text("Sonara 2.4.1 for ${Os.name}", style = MaterialTheme.typography.titleSmall)
+                    Text("Sonara $APP_VERSION for ${Os.name}", style = MaterialTheme.typography.titleSmall)
                     Spacer(Modifier.height(Spacing.XS))
                     Text("Free software under GPL-3.0, derived from Metrolist.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -232,8 +262,109 @@ private fun EqualizerControls() {
 }
 
 private val EQ_SLIDER_HEIGHT = 140.dp
+/** Bumped with appVersion in build.gradle.kts for every installer. */
+private const val APP_VERSION = "2.4.2"
 private const val BYTES_PER_MB = 1_048_576.0
 private const val MB_PER_GB = 1024
 private const val MAX_CROSSFADE = 12
 private val CROSSFADE_WIDTH = 160.dp
 private val MENU_HEIGHT = 320.dp
+
+/** Saves a backup where the user picks; says how it went. */
+private fun backUp(app: AppState) {
+    val dialog = FileDialog(null as Frame?, "Save a backup of your Sonara data", FileDialog.SAVE)
+    dialog.file = Uninstall.backupName()
+    dialog.isVisible = true
+    val name = dialog.file ?: return
+    val target = File(dialog.directory, if (name.endsWith(".zip")) name else "$name.zip")
+    app.scope.launch(Dispatchers.IO) {
+        runCatching { Backup.write(target, version = APP_VERSION) }
+            .onSuccess { app.showToast("Backed up to ${target.name}") }
+            .onFailure { app.showToast("Couldn't save the backup there. Try another folder.") }
+    }
+}
+
+/** Checks the backup the user picks and readies it; true when it is ready for the next start. */
+private fun restore(app: AppState): Boolean {
+    val dialog = FileDialog(null as Frame?, "Choose a Sonara backup", FileDialog.LOAD)
+    dialog.setFilenameFilter { _, name -> name.endsWith(".zip", ignoreCase = true) }
+    dialog.isVisible = true
+    val name = dialog.file ?: return false
+    return runCatching { Backup.stage(File(dialog.directory, name)) }
+        .onFailure { app.showToast(it.message?.takeIf { message -> message.startsWith("This") } ?: "That file couldn't be read as a Sonara backup.") }
+        .isSuccess
+}
+
+private fun openAppsSettings() {
+    runCatching { ProcessBuilder("explorer.exe", "ms-settings:appsfeatures").start() }
+}
+
+private fun quit(app: AppState) {
+    app.player.shutdown()
+    exitProcess(0)
+}
+
+@Composable
+private fun RestoreReadyDialog(app: AppState, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        title = { Text("Backup ready to restore", style = MaterialTheme.typography.titleLarge) },
+        text = { Text("Sonara puts it in place the next time it opens. Quit now and open Sonara again to finish.") },
+        confirmButton = { TextButton(onClick = { quit(app) }, modifier = Modifier.handCursor()) { Text("Quit now") } },
+        dismissButton = { TextButton(onClick = onDismiss, modifier = Modifier.handCursor()) { Text("Later") } },
+    )
+}
+
+/** A Mac's and Linux's way to remove Sonara, with the user's say over their data. */
+@Composable
+private fun UninstallDialog(app: AppState, onDismiss: () -> Unit) {
+    var choice by remember { mutableStateOf(DataChoice.Keep) }
+    var outcome by remember { mutableStateOf<String?>(null) }
+    val done = outcome
+    if (done != null) {
+        AlertDialog(
+            onDismissRequest = { quit(app) },
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            title = { Text("Uninstall Sonara", style = MaterialTheme.typography.titleLarge) },
+            text = { Text(done) },
+            confirmButton = { TextButton(onClick = { quit(app) }, modifier = Modifier.handCursor()) { Text("Quit") } },
+        )
+        return
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        title = { Text("Uninstall Sonara", style = MaterialTheme.typography.titleLarge) },
+        text = {
+            Column {
+                Text("What should happen to your Sonara data: sign-in, settings, history, downloads and song cache?")
+                Spacer(Modifier.height(Spacing.M))
+                listOf(
+                    DataChoice.Keep to "Keep it, for when I install Sonara again",
+                    DataChoice.BackUpThenDelete to "Back it up to a file, then delete it",
+                    DataChoice.Delete to "Delete it",
+                ).forEach { (option, label) ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().clip(ErShape.Small).clickable { choice = option }.handCursor().padding(vertical = Spacing.XS),
+                    ) {
+                        RadioButton(selected = choice == option, onClick = { choice = option })
+                        Text(label, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                outcome =
+                    when (val result = Uninstall.uninstallHere(choice)) {
+                        Uninstall.Result.Removed -> "Sonara was removed." + if (choice == DataChoice.Keep) " Your data was kept." else ""
+                        is Uninstall.Result.RemoveYourself -> "Your data was handled as you chose. To finish: ${result.how}"
+                        Uninstall.Result.BackupSkipped -> "No backup was made, so nothing was removed."
+                    }
+            }, modifier = Modifier.handCursor()) { Text("Uninstall") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss, modifier = Modifier.handCursor()) { Text("Cancel") } },
+    )
+}

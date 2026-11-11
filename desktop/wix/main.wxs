@@ -107,10 +107,38 @@
     <!-- Sonara: "Open Sonara" on the last page, ticked -->
     <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Open Sonara"/>
     <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1"/>
-    <CustomAction Id="SonaraOpen" Directory="INSTALLDIR" ExeCommand="&quot;[INSTALLDIR]Sonara.exe&quot;" Return="asyncNoWait" Impersonate="yes"/>
+    <CustomAction Id="SonaraOpen" Directory="INSTALLDIR" ExeCommand="&quot;[INSTALLDIR]$(var.JpAppName).exe&quot;" Return="asyncNoWait" Impersonate="yes"/>
     <UI>
       <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="SonaraOpen">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
+      <!-- Sonara: an update goes from the welcome page straight to Install: the licence and the
+           folder were settled the first time, and the update keeps the same folder. -->
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="9">JP_UPGRADABLE_FOUND</Publish>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="9">JP_UPGRADABLE_FOUND</Publish>
     </UI>
+
+    <!-- Sonara: before anything is replaced or removed (updates and uninstalls alike), and before
+         an older version's uninstaller runs as part of an update:
+         1. close the running app, so Windows never has to ask for it to be closed by hand;
+         2. take away the older versions' "remove this folder" entries (RM_RF...): up to 2.4.1 that
+            folder held the user's data too, and the old uninstaller emptied it on every update;
+         3. move data from where 2.4.1 kept it (Sonara\data) to where it lives now (Sonara Data).
+         It runs as the user and needs no administrator. It finds the app by its own name, and the
+         user's registry by its SID (under the installer, HKCU is not the user's). -->
+    <Property Id="WixQuietExecCmdLine" Value="&quot;[SystemFolder]cmd.exe&quot; /d /c taskkill.exe /F /T /IM $(var.JpAppName).exe &gt;nul 2&gt;&amp;1 &amp; ping.exe -n 3 127.0.0.1 &gt;nul &amp; (for /f &quot;delims=&quot; %k in ('reg.exe query &quot;HKU\[UserSID]\Software\$(var.JpAppVendor)\$(var.JpAppName)&quot; 2^&gt;nul') do @reg.exe delete &quot;%k&quot; /v RM_RF48431AECBD69377EA800D62616352F20 /f &gt;nul 2&gt;&amp;1) &amp; if exist &quot;%LOCALAPPDATA%\$(var.JpAppName)\data\&quot; if not exist &quot;%LOCALAPPDATA%\$(var.JpAppName) Data\&quot; move /y &quot;%LOCALAPPDATA%\$(var.JpAppName)\data&quot; &quot;%LOCALAPPDATA%\$(var.JpAppName) Data&quot; &gt;nul"/>
+    <CustomAction Id="SonaraCloseRunning" BinaryKey="WixCA" DllEntry="WixQuietExec" Execute="immediate" Return="ignore"/>
+
+    <!-- Sonara: on a real uninstall (not the one an update does), ask what to do with the user's
+         data: keep it, back it up then delete it, or delete it. SONARA_DATA=keep|delete answers
+         for silent uninstalls; with no answer and no UI, the data is kept. -->
+    <!-- Sonara: on a real uninstall, the entry that opens Sonara at sign-in goes too (it would
+         only fail). The user's registry is named by its SID: under the installer, HKCU is not the
+         user's. -->
+    <CustomAction Id="SonaraSetRunEntryCleanup" Property="WixQuietExecCmdLine" Value="&quot;[SystemFolder]reg.exe&quot; delete &quot;HKU\[UserSID]\Software\Microsoft\Windows\CurrentVersion\Run&quot; /v $(var.JpAppName) /f"/>
+    <CustomAction Id="SonaraRemoveRunEntry" BinaryKey="WixCA" DllEntry="WixQuietExec" Execute="immediate" Return="ignore"/>
+
+    <!-- Run with the app's own Java, not Sonara.exe: that launcher hands the app to a second
+         process, which the installer wouldn't wait for (UninstallMain.kt). -->
+    <CustomAction Id="SonaraAskAboutData" Directory="INSTALLDIR" ExeCommand="&quot;[INSTALLDIR]runtime\bin\javaw.exe&quot; -cp &quot;[INSTALLDIR]app\*&quot; &quot;-Djpackage.app-path=[INSTALLDIR]$(var.JpAppName).exe&quot; &quot;-Dsonara.localappdata=[LocalAppDataFolder].&quot; com.ermusic.desktop.UninstallMain [SONARA_DATA]" Execute="deferred" Impersonate="yes" Return="ignore"/>
 
     <UIRef Id="JpUI"/>
 
@@ -137,10 +165,15 @@
       <?endif?>
       <RemoveExistingProducts Before="CostInitialize"/>
       <Custom Action="JpFindRelatedProducts" After="FindRelatedProducts"/>
+      <Custom Action="SonaraCloseRunning" After="JpFindRelatedProducts"/>
+      <Custom Action="SonaraSetRunEntryCleanup" After="SonaraCloseRunning">REMOVE~="ALL" AND NOT UPGRADINGPRODUCTCODE</Custom>
+      <Custom Action="SonaraRemoveRunEntry" After="SonaraSetRunEntryCleanup">REMOVE~="ALL" AND NOT UPGRADINGPRODUCTCODE</Custom>
+      <Custom Action="SonaraAskAboutData" Before="RemoveFiles">REMOVE~="ALL" AND NOT UPGRADINGPRODUCTCODE AND (UILevel&gt;2 OR SONARA_DATA)</Custom>
     </InstallExecuteSequence>
 
     <InstallUISequence>
       <Custom Action="JpFindRelatedProducts" After="FindRelatedProducts"/>
+      <Custom Action="SonaraCloseRunning" After="JpFindRelatedProducts"/>
     </InstallUISequence>
 
   </Product>

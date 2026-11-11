@@ -66,6 +66,17 @@ title bar's space to the app over JNA and keeps the native frame (resize, snap).
 `appVersion` for every installer. The Android app's lyric sources are compiled as they are
 (`fromAndroid` in the build file, with small stand-ins under `src/main/kotlin/android/`). `SONARA_GUEST=1` skips sign-in for development.
 
+Data and removal: on Windows the data lives in `%LOCALAPPDATA%\Sonara Data`, apart from the program
+folder (`%LOCALAPPDATA%\Sonara`), because jpackage's uninstaller empties the program folder
+(RemoveFolderEx) and every update runs the old version's uninstaller; up to 2.4.1 the data sat in
+`Sonara\data` and the 2.4.2 installer moves it out first (`wix/main.wxs`). The installer also closes
+the running app itself, and on a real uninstall asks keep / back up then delete / delete through
+`runtimein\javaw.exe ... com.ermusic.desktop.UninstallMain` (not Sonara.exe, which runs the app in a
+second process the installer wouldn't wait for); `SONARA_DATA=keep|delete` answers silent uninstalls.
+Under the installer HKCU is not the user's: name the user's hive as `HKU\[UserSID]`. A Mac and Linux
+have no uninstaller, so Settings has Uninstall Sonara; every platform has Back up and Restore
+(`data/Backup.kt`, never the sign-in).
+
 The same app runs on macOS, with nothing left out; `Os.kt` says where it runs, and each Windows piece
 has a Mac counterpart: the app drawn under a see-through title bar with the traffic lights kept
 (`WindowChrome`), the session sealed with a key in the login keychain (`auth/MacKeychain.kt`), media

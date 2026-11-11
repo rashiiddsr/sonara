@@ -86,7 +86,7 @@ val fromAndroid by tasks.registering(Sync::class) {
 }
 kotlin.sourceSets["main"].kotlin.srcDir(fromAndroid)
 
-val appVersion = "2.4.1"
+val appVersion = "2.4.2"
 val ktor = "3.6.0"
 val ffmpegPresets = "1.5.14"
 
@@ -164,7 +164,7 @@ compose.desktop {
             // Bumped for every installer: Windows only upgrades to a higher version.
             packageVersion = appVersion
             vendor = "Sonara"
-            description = "Sonara"
+            description = "Find your song"
             licenseFile.set(project.file("../LICENSE"))
             modules(
                 "java.instrument", "java.management", "java.naming", "java.net.http", "java.sql",
@@ -205,6 +205,17 @@ compose.desktop {
     }
 }
 
+// Windows: keep java.exe and javaw.exe in the bundled runtime. The installer runs the uninstall
+// question with javaw.exe (UninstallMain.kt): through Sonara.exe it would not wait for the answer.
+// The setting is internal to the Compose plugin, hence the reflection.
+if (System.getProperty("os.name").startsWith("Windows", ignoreCase = true)) {
+    tasks.withType<org.jetbrains.compose.desktop.application.tasks.AbstractJLinkTask>().configureEach {
+        val strip = javaClass.methods.first { it.name.startsWith("getStripNativeCommands") && it.parameterCount == 0 }
+        @Suppress("UNCHECKED_CAST")
+        (strip.invoke(this) as Property<Boolean>).set(false)
+    }
+}
+
 // The app's jars with another system's natives (-Psonara.natives=macosx-arm64), for putting a Mac
 // app together away from a Mac (mac/make_app.py). On a Mac itself, packageDmg is the way.
 tasks.register<Sync>("stageAppJars") {
@@ -234,7 +245,7 @@ tasks.register<Exec>("packageInstaller") {
         "--app-image", layout.buildDirectory.dir("compose/binaries/main/app/Sonara").get().asFile.path,
         "--app-version", appVersion,
         "--vendor", "Sonara",
-        "--description", "Sonara",
+        "--description", "Find your song",
         "--license-file", project.file("../LICENSE").path,
         "--resource-dir", wixResources.path,
         "--win-per-user-install",

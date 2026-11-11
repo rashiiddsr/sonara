@@ -32,10 +32,21 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # GitHub's Ubuntu mirror (azure.archive.ubuntu.com) is sometimes unreachable for a while: try
+      # again, and from the second try on use Ubuntu's own archive instead.
       - name: Packaging and test tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y fakeroot xvfb imagemagick x11-utils dbus libglib2.0-bin
+          for attempt in 1 2 3 4 5; do
+            if sudo apt-get update -o Acquire::Retries=3 && \
+               sudo apt-get install -y -o Acquire::Retries=3 fakeroot xvfb imagemagick x11-utils dbus libglib2.0-bin; then
+              exit 0
+            fi
+            echo "Ubuntu's mirror didn't answer (try $attempt); trying Ubuntu's own archive in 20 s"
+            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' \
+              /etc/apt/apt-mirrors.txt /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
+            sleep 20
+          done
+          exit 1
 
       - name: Test
         run: xvfb-run -a ./gradlew --console=plain -p desktop test

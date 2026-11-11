@@ -30,7 +30,7 @@ cat > "$dir/sonara-Sonara.desktop" <<'ENTRY'
 Type=Application
 Name=Sonara
 GenericName=Music player
-Comment=A lean YouTube Music player
+Comment=Find your song
 Exec=Sonara
 Icon=sonara-Sonara
 Categories=AudioVideo;Audio;Player;

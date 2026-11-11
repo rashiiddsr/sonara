@@ -16,7 +16,8 @@ import java.io.File
  */
 object StartAtLogin {
     private const val RUN_KEY = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
-    private const val VALUE = "Sonara"
+    /** The Run entry's name: the program's own ("Sonara"), so a second copy never touches the first's. */
+    private val VALUE: String = System.getProperty("jpackage.app-path")?.let { java.io.File(it).nameWithoutExtension }?.takeIf { Os.isWindows } ?: "Sonara"
     private const val AGENT_LABEL = "app.sonara.desktop"
     // An AppImage runs from a new folder each time: the image itself is what to start.
     private val executable: String? = System.getenv("APPIMAGE")?.takeIf { Os.isLinux } ?: System.getProperty("jpackage.app-path")
