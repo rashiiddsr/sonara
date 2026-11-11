@@ -5,6 +5,11 @@ name: Linux app
 # dependencies have the names both older and newer releases know.
 on:
   workflow_dispatch:
+    inputs:
+      release:
+        description: "Attach the files to this release (a version tag, e.g. v2.4.2); empty: don't"
+        required: false
+        default: ""
   push:
     tags: ["v*"]
 
@@ -32,21 +37,31 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # GitHub's Ubuntu mirror (azure.archive.ubuntu.com) is sometimes unreachable for a while: try
-      # again, and from the second try on use Ubuntu's own archive instead.
+      # The runner image already has what the build needs; apt runs only for what is missing, since
+      # Ubuntu's mirrors are sometimes unreachable from GitHub for an hour or more. A missing
+      # required package is tried a few times (Ubuntu's own archive from the second try on), each
+      # try time-limited; x11-utils (xprop, for a look at the window class) never holds the build up.
       - name: Packaging and test tools
+        timeout-minutes: 15
         run: |
-          for attempt in 1 2 3 4 5; do
-            if sudo apt-get update -o Acquire::Retries=3 && \
-               sudo apt-get install -y -o Acquire::Retries=3 fakeroot xvfb imagemagick x11-utils dbus libglib2.0-bin; then
-              exit 0
-            fi
-            echo "Ubuntu's mirror didn't answer (try $attempt); trying Ubuntu's own archive in 20 s"
-            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' \
-              /etc/apt/apt-mirrors.txt /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
-            sleep 20
-          done
-          exit 1
+          missing() { for p in "$@"; do dpkg -s "$p" >/dev/null 2>&1 || echo "$p"; done; }
+          apt_try() {
+            sudo timeout 150 apt-get update -o Acquire::Retries=1 -o Acquire::http::Timeout=10 &&
+              sudo timeout 150 apt-get install -y -o Acquire::Retries=1 -o Acquire::http::Timeout=10 "$@"
+          }
+          required=$(missing fakeroot xvfb imagemagick dbus libglib2.0-bin)
+          if [ -n "$required" ]; then
+            for attempt in 1 2 3 4; do
+              apt_try $required $(missing x11-utils) && exit 0
+              echo "Ubuntu's mirror didn't answer (try $attempt); trying Ubuntu's own archive in 20 s"
+              sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' \
+                /etc/apt/apt-mirrors.txt /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
+              sleep 20
+            done
+            exit 1
+          fi
+          optional=$(missing x11-utils)
+          if [ -n "$optional" ]; then apt_try $optional || echo "Skipping $optional: Ubuntu's mirror didn't answer"; fi
 
       - name: Test
         run: xvfb-run -a ./gradlew --console=plain -p desktop test
@@ -85,7 +100,7 @@ jobs:
             "$(ls out/*.AppImage)" > out/app.log 2>&1 &
             sleep 40
             import -window root out/linux-window.png
-            echo "--- window class"; xprop -name Sonara WM_CLASS || true
+            echo "--- window class"; if command -v xprop >/dev/null; then xprop -name Sonara WM_CLASS || true; else echo "(xprop not installed)"; fi
             echo "--- media player on the bus"
             gdbus call --session --dest org.mpris.MediaPlayer2.sonara --object-path /org/mpris/MediaPlayer2 \
               --method org.freedesktop.DBus.Properties.GetAll org.mpris.MediaPlayer2 || true
@@ -107,13 +122,16 @@ jobs:
           if-no-files-found: error
 
       # On a version tag the .deb and the AppImage go straight onto that release; the APK and
-      # the .msi are added from the owner's PC.
+      # the .msi are added from the owner's PC. A manual run can name the release (when the tag's
+      # own run failed), without moving the tag.
       - name: Attach to the release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release != ''
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE: ${{ inputs.release }}
         run: |
-          tag="${GITHUB_REF_NAME}"
+          tag="${RELEASE:-$GITHUB_REF_NAME}"
+          case "$tag" in v[0-9]*) ;; *) echo "Not a version tag: $tag"; exit 1 ;; esac
           gh release view "$tag" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1 || gh release create "$tag" -R "$GITHUB_REPOSITORY" --title "Sonara ${tag#v}" --notes "" || true
           gh release upload "$tag" out/*.deb out/*.AppImage -R "$GITHUB_REPOSITORY" --clobber
 
