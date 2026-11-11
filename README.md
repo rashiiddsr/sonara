@@ -56,7 +56,7 @@ keyboard shortcuts, playing on from the tray or menu bar, and opening at sign-in
 Download the file for your device from the [latest release](../../releases/latest).
 
 <details>
-<summary><b>Android</b> · <code>Sonara-2.4.1.apk</code> · Android 8.0 or newer</summary>
+<summary><b>Android</b> · <code>Sonara-2.4.2.apk</code> · Android 8.0 or newer</summary>
 
 1. Open the APK on your phone.
 2. If asked, allow your browser or file manager to install apps.
