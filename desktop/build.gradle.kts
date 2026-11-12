@@ -164,7 +164,10 @@ compose.desktop {
             // Bumped for every installer: Windows only upgrades to a higher version.
             packageVersion = appVersion
             vendor = "Sonara"
-            description = "Find your song"
+            // On Windows this becomes Sonara.exe's description, which Task Manager shows as the
+            // app's name, so there it is "Sonara"; the installer still says "Find your song"
+            // (packageInstaller). On a Mac and Linux it is the package's and menu entry's comment.
+            description = if (System.getProperty("os.name").startsWith("Windows", ignoreCase = true)) "Sonara" else "Find your song"
             licenseFile.set(project.file("../LICENSE"))
             modules(
                 "java.instrument", "java.management", "java.naming", "java.net.http", "java.sql",
