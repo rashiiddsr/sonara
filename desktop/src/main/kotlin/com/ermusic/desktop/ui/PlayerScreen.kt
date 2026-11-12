@@ -324,10 +324,16 @@ fun QueuePanel(app: AppState, state: PlayerState) {
                 app.sidePanelDismissed = true
             }
         }
+        val reorder = rememberReorder<Track>(list) { it.id }
+        val queue = reorder.shown(state.queue)
+        // Where a song is in the player's queue, which is not where it is shown while one is dragged.
+        fun at(track: Track) = state.queue.indexOfFirst { it.id == track.id }
+        val onMoved = { moved: Moved -> player.move(moved.from, moved.to) }
         ScrollingColumn(Modifier.fillMaxSize(), state = list) {
-            itemsIndexed(state.queue, key = { _, track -> track.id }, contentType = { _, _ -> "track" }) { index, track ->
+            itemsIndexed(queue, key = { _, track -> track.id }, contentType = { _, _ -> "track" }) { _, track ->
                 var menuAt by remember { mutableStateOf<IntOffset?>(null) }
-                Box {
+                val current = track.id == state.current?.id
+                Box(Modifier.animateItem(placementSpec = reorder.placement(track.id)).reorderRow(reorder, track.id, state.queue)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier =
@@ -336,21 +342,34 @@ fun QueuePanel(app: AppState, state: PlayerState) {
                                 .padding(end = Spacing.S)
                                 .height(Size.ListRow)
                                 .clip(ErShape.Small)
-                                .background(if (index == state.index) colors.primaryContainer else Color.Transparent)
-                                .clickable { player.jumpTo(index) }
+                                .background(if (current) colors.primaryContainer else Color.Transparent)
+                                .dragToReorder(reorder, track.id, state.queue, mouseOnly = true, onMoved = onMoved)
+                                .clickable { player.jumpTo(at(track)) }
                                 .handCursor()
                                 .onRightClick { menuAt = it }
                                 .padding(horizontal = Spacing.S),
                     ) {
+                        Icon(
+                            icon("drag_handle"),
+                            "Drag to reorder",
+                            tint = colors.onSurfaceVariant,
+                            modifier = Modifier.size(Size.IconSmall).dragToReorder(reorder, track.id, state.queue, mouseOnly = false, onMoved = onMoved),
+                        )
+                        Spacer(Modifier.width(Spacing.S))
                         Art(track.artUrl, Modifier.size(Size.ListThumb), pixels = 120)
                         Spacer(Modifier.width(Spacing.M))
                         Column(Modifier.weight(1f)) {
-                            Text(track.title, style = MaterialTheme.typography.titleSmall, color = if (index == state.index) colors.primary else colors.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(track.title, style = MaterialTheme.typography.titleSmall, color = if (current) colors.primary else colors.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             CreditsText(track.allCredits, app, MaterialTheme.typography.bodySmall, colors.onSurfaceVariant)
                         }
-                        if (index != state.index) SymbolButton("close", "Remove from queue", tint = colors.onSurfaceVariant, iconSize = Size.IconSmall) { player.removeAt(index) }
+                        if (!current) SymbolButton("close", "Remove from queue", tint = colors.onSurfaceVariant, iconSize = Size.IconSmall) { player.removeAt(at(track)) }
                     }
-                    TrackMenu(track, app, menuAt, extra = if (index != state.index) { { close -> AppMenuItem("Remove from queue", "close") { player.removeAt(index); close() } } } else null) { menuAt = null }
+                    TrackMenu(track, app, menuAt, extra = { close ->
+                        val index = at(track)
+                        if (index > 0) AppMenuItem("Move up", "arrow_upward") { player.move(index, index - 1); close() }
+                        if (index in 0 until state.queue.lastIndex) AppMenuItem("Move down", "arrow_downward") { player.move(index, index + 1); close() }
+                        if (!current) AppMenuItem("Remove from queue", "close") { player.removeAt(index); close() }
+                    }) { menuAt = null }
                 }
             }
         }

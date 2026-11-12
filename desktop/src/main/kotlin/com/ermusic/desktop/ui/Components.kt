@@ -575,6 +575,10 @@ fun ItemRow(
     addedBy: String? = null,
     menuExtra: (@Composable ColumnScope.(() -> Unit) -> Unit)? = null,
     leading: (@Composable () -> Unit)? = null,
+    /** In place of [leading] while the pointer is on the row, such as a handle to drag it by. */
+    hoverLeading: (@Composable () -> Unit)? = null,
+    /** On the row itself, under its click, such as dragging it into a new place. */
+    rowModifier: Modifier = Modifier,
 ) {
     val hover = remember { MutableInteractionSource() }
     val hovered by hover.collectIsHoveredAsState()
@@ -590,13 +594,14 @@ fun ItemRow(
                     .height(Size.ListRow)
                     .hoverable(hover)
                     .clip(ErShape.Small)
+                    .then(rowModifier)
                     .clickable { onClick?.invoke() ?: app.activate(item) }
                     .handCursor()
                     .onRightClick { menuAt = it }
                     .background(if (hovered) MaterialTheme.colorScheme.onSurface.copy(alpha = HOVER_ALPHA) else Color.Transparent)
                     .padding(horizontal = Spacing.S),
         ) {
-            leading?.invoke()
+            if (hovered && hoverLeading != null) hoverLeading() else leading?.invoke()
             Art(item.thumbnail, Modifier.size(Size.ListThumb), if (item is ArtistItem) CircleShape else ErShape.Small, pixels = 120)
             Spacer(Modifier.width(Spacing.M))
             Column(Modifier.weight(1f)) {

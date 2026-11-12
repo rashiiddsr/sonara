@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.ermusic.desktop.data.Downloads
 import com.ermusic.desktop.data.History
+import com.ermusic.desktop.data.Settings
 import com.ermusic.desktop.data.SpeedDial
 import com.ermusic.desktop.playback.Credit
 import com.ermusic.desktop.playback.Track
@@ -630,21 +631,49 @@ private fun TrackList(tracks: List<Track>, app: AppState, emptyText: String) {
 // ---- Album, playlist, artist ----
 
 @Composable
-private fun SongList(songs: List<SongItem>, app: AppState, modifier: Modifier = Modifier, rowFor: ((Int) -> PlaylistRow?)? = null, addedBy: ((SongItem) -> String?)? = null, header: (@Composable () -> Unit)? = null) {
-    val shown = songs.filter { it.allowed() }
-    ScrollingColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = Spacing.XXL)) {
+private fun SongList(
+    songs: List<SongItem>,
+    app: AppState,
+    modifier: Modifier = Modifier,
+    rowFor: ((Int) -> PlaylistRow?)? = null,
+    addedBy: ((SongItem) -> String?)? = null,
+    /** Songs can be dragged into a new place: the song, the one it now goes before (null: the end), and how to put it back. */
+    onMove: ((song: SongItem, successor: SongItem?, undo: () -> Unit) -> Unit)? = null,
+    header: (@Composable () -> Unit)? = null,
+) {
+    val allowed = remember(songs, Settings.hideExplicit.value, Settings.hideVideos.value) { songs.filter { it.allowed() } }
+    val list = rememberLazyListState()
+    val reorder = rememberReorder<SongItem>(list, waits = true) { it.setVideoId ?: it.id }
+    val shown = reorder.shown(allowed)
+    ScrollingColumn(modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = Spacing.XXL)) {
         header?.let { content -> item(key = "header", contentType = "header") { content() } }
         itemsIndexed(shown, key = { _, song -> song.setVideoId ?: song.id }, contentType = { _, _ -> "song" }) { index, song ->
+            val key = song.setVideoId ?: song.id
+            val number = @Composable {
+                Text("${index + 1}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(SONG_NUMBER_WIDTH))
+            }
             ItemRow(
                 song,
                 app,
-                Modifier.padding(start = Spacing.L, end = Spacing.XL),
+                Modifier.animateItem(placementSpec = reorder.placement(key)).reorderRow(reorder, key, allowed).padding(start = Spacing.L, end = Spacing.XL),
                 onClick = { app.player.play(shown.tracks(), index) },
                 row = rowFor?.invoke(songs.indexOf(song)),
                 addedBy = addedBy?.invoke(song),
-                leading = {
-                    Text("${index + 1}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(SONG_NUMBER_WIDTH))
+                leading = number,
+                hoverLeading = onMove?.let {
+                    @Composable {
+                        Box(Modifier.width(SONG_NUMBER_WIDTH), contentAlignment = Alignment.CenterStart) {
+                            Icon(icon("drag_handle"), "Drag to reorder", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(Size.IconSmall))
+                        }
+                    }
                 },
+                rowModifier =
+                    onMove?.let { move ->
+                        Modifier.dragToReorder(reorder, key, allowed, mouseOnly = true) { moved ->
+                            val after = allowed.toMutableList().apply { add(moved.to, removeAt(moved.from)) }
+                            move(after[moved.to], after.getOrNull(moved.to + 1), reorder::undo)
+                        }
+                    } ?: Modifier,
             )
         }
     }
@@ -740,13 +769,28 @@ fun PlaylistScreen(id: String, app: AppState) {
     val people by produceState<YouTubePlaylistEditor.PlaylistPeople?>(null, id, app.libraryVersion, app.profile) {
         value = if (YouTube.cookie == null || id == LIKED_PLAYLIST_ID) null else withContext(Dispatchers.IO) { YouTubePlaylistEditor.people(id, app.profile?.thumbnailUrl) }
     }
-    Loaded(page, skeleton = { DetailSkeleton() }) { (playlist, songs) ->
+    // The order after moves YouTube accepted, so the page needn't load again (and lose its scroll).
+    var moved by remember(page) { mutableStateOf<List<SongItem>?>(null) }
+    Loaded(page, skeleton = { DetailSkeleton() }) { (playlist, loaded) ->
+        val songs = moved ?: loaded
         val info = playlist.playlist
         val editable = info.isEditable && id != LIKED_PLAYLIST_ID
         val query = filter.trim()
         val matching = if (query.isEmpty()) songs else songs.filter { it.title.contains(query, true) || it.subtitle().contains(query, true) }
         val tracks = matching.tracks()
-        SongList(matching, app, addedBy = { song -> people?.addedBy?.get(song.id)?.avatarUrl }, rowFor = { index ->
+
+        // Shown in its new place only once YouTube has taken the move.
+        fun move(song: SongItem, successor: SongItem?, undo: () -> Unit = {}) {
+            val setId = song.setVideoId ?: return undo()
+            app.moveInPlaylist(id, setId, successor?.setVideoId, onFailed = undo) {
+                // From the order as it is by then: another move may have been taken meanwhile.
+                val rest = (moved ?: loaded).filter { it.setVideoId != setId }
+                val at = successor?.let { next -> rest.indexOfFirst { it.setVideoId == next.setVideoId } }?.takeIf { it >= 0 } ?: rest.size
+                moved = rest.take(at) + song + rest.drop(at)
+            }
+        }
+        val reorderable = editable && query.isEmpty() && songs.all { it.setVideoId != null }
+        SongList(matching, app, addedBy = { song -> people?.addedBy?.get(song.id)?.avatarUrl }, onMove = if (reorderable) ({ song, successor, undo -> move(song, successor, undo) }) else null, rowFor = { index ->
             val canRemove = index in songs.indices && people?.removable?.contains(songs[index].id) == true
             if (!editable && canRemove) {
                 PlaylistRow(id, null, null)
@@ -757,8 +801,8 @@ fun PlaylistScreen(id: String, app: AppState) {
                 val setId = song.setVideoId
                 PlaylistRow(
                     id,
-                    onMoveUp = if (index > 0 && setId != null) ({ app.moveInPlaylist(id, setId, songs[index - 1].setVideoId) }) else null,
-                    onMoveDown = if (index < songs.lastIndex && setId != null) ({ app.moveInPlaylist(id, setId, songs.getOrNull(index + 2)?.setVideoId) }) else null,
+                    onMoveUp = if (index > 0 && setId != null) ({ move(song, songs[index - 1]) }) else null,
+                    onMoveDown = if (index < songs.lastIndex && setId != null) ({ move(song, songs.getOrNull(index + 2)) }) else null,
                 )
             }
         }, header = {

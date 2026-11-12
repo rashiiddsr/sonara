@@ -164,16 +164,49 @@ class Player(private val scope: CoroutineScope) {
         }
     }
 
+    /** Right after the current song; a song already in the queue moves there instead of being in it twice. */
     fun playNext(tracks: List<Track>) {
         if (mutableState.value.current == null) return play(tracks)
         mutableState.update { state ->
-            state.copy(queue = state.queue.take(state.index + 1) + tracks + state.queue.drop(state.index + 1))
+            val (rest, index, adding) = withoutRepeats(state, tracks)
+            state.copy(queue = rest.take(index + 1) + adding + rest.drop(index + 1), index = index)
         }
     }
 
+    /** At the end; a song already in the queue moves there instead of being in it twice. */
     fun addToQueue(tracks: List<Track>) {
         if (mutableState.value.current == null) return play(tracks)
-        mutableState.update { it.copy(queue = it.queue + tracks) }
+        mutableState.update { state ->
+            val (rest, index, adding) = withoutRepeats(state, tracks)
+            state.copy(queue = rest + adding, index = index)
+        }
+    }
+
+    /** The queue without [tracks] (the current song stays), where the current song is then, and what to add. */
+    private fun withoutRepeats(state: PlayerState, tracks: List<Track>): Triple<List<Track>, Int, List<Track>> {
+        val currentId = state.current?.id
+        val adding = tracks.filter { it.id != currentId }.distinctBy { it.id }
+        val ids = adding.mapTo(HashSet()) { it.id }
+        val kept = { i: Int, track: Track -> i == state.index || track.id !in ids }
+        val rest = state.queue.filterIndexed(kept)
+        val index = state.queue.take(state.index).filterIndexed(kept).size
+        return Triple(rest, index, adding)
+    }
+
+    /** Puts the song at [from] at [to]; the current song keeps playing wherever it ends up. */
+    fun move(from: Int, to: Int) {
+        mutableState.update { state ->
+            if (from !in state.queue.indices || to !in state.queue.indices || from == to) return@update state
+            val queue = state.queue.toMutableList().apply { add(to, removeAt(from)) }
+            val index =
+                when {
+                    state.index == from -> to
+                    from < state.index && to >= state.index -> state.index - 1
+                    from > state.index && to <= state.index -> state.index + 1
+                    else -> state.index
+                }
+            state.copy(queue = queue, index = index)
+        }
     }
 
     fun toggle() {

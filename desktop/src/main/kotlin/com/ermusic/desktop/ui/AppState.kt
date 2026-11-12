@@ -268,12 +268,13 @@ class AppState(val player: Player, val scope: CoroutineScope, val onSignOut: () 
     }
 
     /** Runs an account change, and tells the user how it went only once YouTube has answered. */
-    private fun confirmed(done: String, failed: String, call: suspend () -> Result<*>, then: suspend () -> Unit = {}) {
+    private fun confirmed(done: String, failed: String, call: suspend () -> Result<*>, orElse: () -> Unit = {}, then: suspend () -> Unit = {}) {
         scope.launch(Dispatchers.IO) {
             if (call().isSuccess) {
                 then()
                 showToast(done)
             } else {
+                orElse()
                 showToast(failed)
             }
         }
@@ -326,8 +327,14 @@ class AppState(val player: Player, val scope: CoroutineScope, val onSignOut: () 
 
     fun openRadio(track: Track) = openRadio(track.title, track.artUrl, WatchEndpoint(videoId = track.id))
 
-    fun moveInPlaylist(playlistId: String, setVideoId: String, successor: String?) {
-        confirmed("Moved", "Couldn't move the song", { YouTube.moveSongPlaylist(playlistId, setVideoId, successor) }) { libraryVersion++ }
+    /**
+     * Puts a song before [successor] (null: at the end) once YouTube accepts it. [onMoved] then
+     * updates the page's own copy, so it keeps its scroll; without it the page loads again.
+     */
+    fun moveInPlaylist(playlistId: String, setVideoId: String, successor: String?, onFailed: () -> Unit = {}, onMoved: (() -> Unit)? = null) {
+        confirmed("Moved", "Couldn't move the song", { YouTube.moveSongPlaylist(playlistId, setVideoId, successor) }, orElse = onFailed) {
+            if (onMoved != null) onMoved() else libraryVersion++
+        }
     }
 
     /** After an edit YouTube accepted, by the editor. */
